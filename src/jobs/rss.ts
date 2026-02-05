@@ -118,6 +118,21 @@ const decodeHtmlEntities = (value: string, passes = 2): string => {
   return result
 }
 
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
+
+const readEnvSeconds = (key: string, fallback: number): number => {
+  const raw = process.env[key]
+  if (!raw) return fallback
+  const parsed = Number.parseInt(raw, 10)
+  return Number.isNaN(parsed) ? fallback : parsed
+}
+
+const randomDelayMs = (minSeconds = 1, maxSeconds = 20): number => {
+  const min = Math.max(0, Math.floor(minSeconds))
+  const max = Math.max(min, Math.floor(maxSeconds))
+  return (min + Math.floor(Math.random() * (max - min + 1))) * 1000
+}
+
 const extractAnchorLinks = (html: string): Array<{ href: string; text: string }> => {
   const anchors: Array<{ href: string; text: string }> = []
   const regex = /<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi
@@ -185,6 +200,10 @@ export const stripHtml = (html: string): string => {
 }
 
 export const fetchText = async (url: string, timeoutMs = 15000): Promise<string> => {
+  const minDelay = readEnvSeconds('RSS_FETCH_JITTER_MIN_SECONDS', 1)
+  const maxDelay = readEnvSeconds('RSS_FETCH_JITTER_MAX_SECONDS', 20)
+  await sleep(randomDelayMs(minDelay, maxDelay))
+
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
