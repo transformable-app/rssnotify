@@ -9,11 +9,13 @@ import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { FeedAutomations } from './collections/FeedAutomations'
+import { Notifications } from './collections/Notifications'
 import { RssFeeds } from './collections/RssFeeds'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { IndexPages } from './IndexPages/config'
+import { Settings } from './Settings/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
@@ -63,7 +65,7 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
   }),
-  collections: [Pages, Posts, Media, Categories, Users, RssFeeds, FeedAutomations],
+  collections: [Pages, Posts, Media, Categories, Users, RssFeeds, FeedAutomations, Notifications],
   cors: [
     getServerSideURL(),
     'https://payloadcms.3twenty9.com',
@@ -71,7 +73,7 @@ export default buildConfig({
   folders: {
     browseByFolder: false,
   },
-  globals: [Header, Footer, IndexPages],
+  globals: [Header, Footer, IndexPages, Settings],
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,

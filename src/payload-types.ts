@@ -74,6 +74,7 @@ export interface Config {
     users: User;
     'rss-feeds': RssFeed;
     'feed-automations': FeedAutomation;
+    notifications: Notification;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -98,6 +99,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     'rss-feeds': RssFeedsSelect<false> | RssFeedsSelect<true>;
     'feed-automations': FeedAutomationsSelect<false> | FeedAutomationsSelect<true>;
+    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -117,11 +119,13 @@ export interface Config {
     header: Header;
     footer: Footer;
     'index-pages': IndexPage;
+    settings: Setting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     'index-pages': IndexPagesSelect<false> | IndexPagesSelect<true>;
+    settings: SettingsSelect<false> | SettingsSelect<true>;
   };
   locale: null;
   user: User & {
@@ -1719,6 +1723,46 @@ export interface FeedAutomation {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications".
+ */
+export interface Notification {
+  id: string;
+  title: string;
+  message?: string | null;
+  sourceURL?: string | null;
+  automation: string | FeedAutomation;
+  feed?: (string | null) | RssFeed;
+  matchedAt: string;
+  overallStatus: 'pending' | 'sent' | 'failed' | 'skipped';
+  delivery: {
+    email: {
+      status: 'pending' | 'sent' | 'failed' | 'skipped';
+      sentAt?: string | null;
+      error?: string | null;
+    };
+    ntfy: {
+      status: 'pending' | 'sent' | 'failed' | 'skipped';
+      sentAt?: string | null;
+      error?: string | null;
+    };
+  };
+  /**
+   * Raw alert payload for debugging and auditing.
+   */
+  data?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1934,6 +1978,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'feed-automations';
         value: string | FeedAutomation;
+      } | null)
+    | ({
+        relationTo: 'notifications';
+        value: string | Notification;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2865,6 +2913,40 @@ export interface FeedAutomationsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications_select".
+ */
+export interface NotificationsSelect<T extends boolean = true> {
+  title?: T;
+  message?: T;
+  sourceURL?: T;
+  automation?: T;
+  feed?: T;
+  matchedAt?: T;
+  overallStatus?: T;
+  delivery?:
+    | T
+    | {
+        email?:
+          | T
+          | {
+              status?: T;
+              sentAt?: T;
+              error?: T;
+            };
+        ntfy?:
+          | T
+          | {
+              status?: T;
+              sentAt?: T;
+              error?: T;
+            };
+      };
+  data?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects_select".
  */
 export interface RedirectsSelect<T extends boolean = true> {
@@ -3376,6 +3458,52 @@ export interface IndexPage {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "settings".
+ */
+export interface Setting {
+  id: string;
+  notifications: {
+    email: {
+      enabled: boolean;
+      fromName?: string | null;
+      fromEmail?: string | null;
+      replyTo?: string | null;
+      /**
+       * Email addresses that receive alert notifications.
+       */
+      recipients?:
+        | {
+            email: string;
+            id?: string | null;
+          }[]
+        | null;
+    };
+    ntfy: {
+      enabled: boolean;
+      /**
+       * Base URL for your ntfy server (e.g., https://ntfy.sh).
+       */
+      serverURL?: string | null;
+      /**
+       * Auth token for ntfy (leave blank if not needed).
+       */
+      authToken?: string | null;
+      /**
+       * One or more ntfy topics to publish alerts to.
+       */
+      channels?:
+        | {
+            topic: string;
+            id?: string | null;
+          }[]
+        | null;
+    };
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -3499,6 +3627,46 @@ export interface IndexPagesSelect<T extends boolean = true> {
         title?: T;
         image?: T;
         description?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "settings_select".
+ */
+export interface SettingsSelect<T extends boolean = true> {
+  notifications?:
+    | T
+    | {
+        email?:
+          | T
+          | {
+              enabled?: T;
+              fromName?: T;
+              fromEmail?: T;
+              replyTo?: T;
+              recipients?:
+                | T
+                | {
+                    email?: T;
+                    id?: T;
+                  };
+            };
+        ntfy?:
+          | T
+          | {
+              enabled?: T;
+              serverURL?: T;
+              authToken?: T;
+              channels?:
+                | T
+                | {
+                    topic?: T;
+                    id?: T;
+                  };
+            };
       };
   updatedAt?: T;
   createdAt?: T;
