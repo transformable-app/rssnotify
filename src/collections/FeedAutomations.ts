@@ -54,9 +54,6 @@ export const FeedAutomations: CollectionConfig<'feed-automations'> = {
       name: 'standardRules',
       label: 'Standard RSS Rules',
       type: 'group',
-      admin: {
-        condition: (data) => data?.type === 'rss',
-      },
       fields: [
         {
           name: 'matchMode',
@@ -81,20 +78,12 @@ export const FeedAutomations: CollectionConfig<'feed-automations'> = {
           defaultValue: false,
         },
         {
-          name: 'modelHost',
+          name: 'model',
+          label: 'OpenAI model',
           type: 'text',
           admin: {
             condition: (data, siblingData) => Boolean(siblingData?.useModel),
-            description: 'Base URL for the model host (e.g., OpenAI-compatible endpoint).',
-          },
-        },
-        {
-          name: 'modelApiKeyEnv',
-          label: 'Model API key env var',
-          type: 'text',
-          admin: {
-            condition: (data, siblingData) => Boolean(siblingData?.useModel),
-            description: 'Name of the environment variable that holds the API key (e.g., OPENAI_API_KEY).',
+            description: 'Model name to use (e.g., gpt-4o-mini).',
           },
         },
         {

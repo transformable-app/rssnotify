@@ -27,19 +27,17 @@ const matchesTextRule = (content: string, matchString?: string | null, matchMode
 
 const runModelCheck = async (args: {
   content: string
-  modelHost?: string | null
-  modelApiKeyEnv?: string | null
+  model?: string | null
   prompt?: string | null
 }): Promise<boolean> => {
-  const { content, modelHost, modelApiKeyEnv, prompt } = args
+  const { content, model, prompt } = args
 
-  if (!modelHost || !modelApiKeyEnv) return true
-
-  const apiKey = process.env[modelApiKeyEnv]
+  const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) return true
 
-  const endpoint = modelHost.replace(/\/$/, '') + '/v1/chat/completions'
-  const model = process.env.MODEL_NAME || 'gpt-4o-mini'
+  const baseURL = process.env.OPENAI_BASE_URL || 'https://api.openai.com'
+  const endpoint = baseURL.replace(/\/$/, '') + '/v1/chat/completions'
+  const modelName = model || process.env.MODEL_NAME || 'gpt-4o-mini'
 
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -48,7 +46,7 @@ const runModelCheck = async (args: {
       authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model,
+      model: modelName,
       temperature: 0,
       messages: [
         {
@@ -86,14 +84,25 @@ const shouldProcessAutomation = (automation: FeedAutomation, feed: RssFeed): boo
   })
 }
 
+const mergeRules = (
+  standardRules: FeedAutomation['standardRules'] | undefined | null,
+  typeRules: FeedAutomation['redditRules'] | FeedAutomation['wordpressRules'] | undefined | null,
+) => {
+  if (!standardRules && !typeRules) return null
+  return {
+    ...(standardRules || {}),
+    ...(typeRules || {}),
+  }
+}
+
 const getAutomationRules = (automation: FeedAutomation) => {
-  if (automation.type === 'rss') {
-    return automation.standardRules || null
-  }
   if (automation.type === 'reddit') {
-    return automation.redditRules || null
+    return mergeRules(automation.standardRules, automation.redditRules)
   }
-  return automation.wordpressRules || null
+  if (automation.type === 'wordpress') {
+    return mergeRules(automation.standardRules, automation.wordpressRules)
+  }
+  return mergeRules(automation.standardRules, null)
 }
 
 const expandItemsForAutomation = async (item: { link?: string }, rules: Record<string, unknown> | null) => {
@@ -102,7 +111,8 @@ const expandItemsForAutomation = async (item: { link?: string }, rules: Record<s
 
   if (!followPostRss || !processComments || !item.link) return [item]
 
-  const rssUrl = item.link.endsWith('.rss') ? item.link : `${item.link}.rss`
+  const cleanedLink = item.link.replace(/\/+$/, '')
+  const rssUrl = cleanedLink.endsWith('.rss') ? cleanedLink : `${cleanedLink}.rss`
   try {
     return await fetchFeedItems(rssUrl)
   } catch {
@@ -230,31 +240,29 @@ export const processFeedsTask: TaskConfig = {
 
           for (const targetItem of itemsToProcess) {
             let content = [targetItem.title, targetItem.content].filter(Boolean).join('\n\n')
-            if (fetchLinkContent && targetItem.link) {
-              const linkContent = await fetchLinkText(targetItem.link)
+            const linkForContent = automation.type === 'reddit'
+              ? targetItem.externalLink || targetItem.link
+              : targetItem.link
+
+            if (fetchLinkContent && linkForContent) {
+              const linkContent = await fetchLinkText(linkForContent)
               if (linkContent) {
                 content = `${content}\n\n${linkContent}`
               }
             }
 
-            const matchesRule = automation.type === 'rss'
-              ? matchesTextRule(content, matchString, matchMode)
-              : true
+            const matchesRule = matchesTextRule(content, matchString, matchMode)
 
             if (!matchesRule) continue
 
-            if (automation.type === 'rss') {
-              const standardRules = automation.standardRules
-              if (standardRules?.useModel) {
-                const modelOk = await runModelCheck({
-                  content,
-                  modelHost: standardRules.modelHost || undefined,
-                  modelApiKeyEnv: standardRules.modelApiKeyEnv || undefined,
-                  prompt: standardRules.modelPrompt || undefined,
-                })
+            if (rules?.useModel) {
+              const modelOk = await runModelCheck({
+                content,
+                model: typeof rules.model === 'string' ? rules.model : undefined,
+                prompt: typeof rules.modelPrompt === 'string' ? rules.modelPrompt : undefined,
+              })
 
-                if (!modelOk) continue
-              }
+              if (!modelOk) continue
             }
 
             const alreadyNotified = await hasNotification({
@@ -266,12 +274,16 @@ export const processFeedsTask: TaskConfig = {
 
             if (alreadyNotified) continue
 
+            const sourceURL = automation.type === 'reddit'
+              ? targetItem.commentsLink || targetItem.link
+              : targetItem.link
+
             const notificationPayload = buildNotificationPayload({
               automation,
               feed,
               title: targetItem.title || feed.name,
               message: targetItem.content ? normalizeContent(targetItem.content).slice(0, 1000) : undefined,
-              sourceURL: targetItem.link,
+              sourceURL,
               matchedAt: targetItem.publishedAt,
               data: {
                 item: targetItem,

@@ -1702,13 +1702,9 @@ export interface FeedAutomation {
     matchString?: string | null;
     useModel?: boolean | null;
     /**
-     * Base URL for the model host (e.g., OpenAI-compatible endpoint).
+     * Model name to use (e.g., gpt-4o-mini).
      */
-    modelHost?: string | null;
-    /**
-     * Name of the environment variable that holds the API key (e.g., OPENAI_API_KEY).
-     */
-    modelApiKeyEnv?: string | null;
+    model?: string | null;
     modelPrompt?: string | null;
     fetchLinkContent?: boolean | null;
   };
@@ -2902,8 +2898,7 @@ export interface FeedAutomationsSelect<T extends boolean = true> {
         matchMode?: T;
         matchString?: T;
         useModel?: T;
-        modelHost?: T;
-        modelApiKeyEnv?: T;
+        model?: T;
         modelPrompt?: T;
         fetchLinkContent?: T;
       };
