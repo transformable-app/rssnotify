@@ -73,6 +73,7 @@ export interface Config {
     categories: Category;
     users: User;
     'rss-feeds': RssFeed;
+    'feed-automations': FeedAutomation;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -96,6 +97,7 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'rss-feeds': RssFeedsSelect<false> | RssFeedsSelect<true>;
+    'feed-automations': FeedAutomationsSelect<false> | FeedAutomationsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -1673,6 +1675,50 @@ export interface RssFeed {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "feed-automations".
+ */
+export interface FeedAutomation {
+  id: string;
+  name: string;
+  enabled: boolean;
+  type: 'rss' | 'reddit' | 'wordpress';
+  /**
+   * Optional: limit this automation to specific feeds.
+   */
+  feeds?: (string | RssFeed)[] | null;
+  standardRules?: {
+    matchMode?: ('contains' | 'regex') | null;
+    /**
+     * String or regex pattern to match against feed item content.
+     */
+    matchString?: string | null;
+    useModel?: boolean | null;
+    /**
+     * Base URL for the model host (e.g., OpenAI-compatible endpoint).
+     */
+    modelHost?: string | null;
+    /**
+     * Name of the environment variable that holds the API key (e.g., OPENAI_API_KEY).
+     */
+    modelApiKeyEnv?: string | null;
+    modelPrompt?: string | null;
+    fetchLinkContent?: boolean | null;
+  };
+  redditRules?: {
+    followPostRss?: boolean | null;
+    processComments?: boolean | null;
+    fetchLinkContent?: boolean | null;
+  };
+  wordpressRules?: {
+    followPostRss?: boolean | null;
+    processComments?: boolean | null;
+    fetchLinkContent?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1884,6 +1930,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'rss-feeds';
         value: string | RssFeed;
+      } | null)
+    | ({
+        relationTo: 'feed-automations';
+        value: string | FeedAutomation;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2773,6 +2823,43 @@ export interface RssFeedsSelect<T extends boolean = true> {
   url?: T;
   enabled?: T;
   notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "feed-automations_select".
+ */
+export interface FeedAutomationsSelect<T extends boolean = true> {
+  name?: T;
+  enabled?: T;
+  type?: T;
+  feeds?: T;
+  standardRules?:
+    | T
+    | {
+        matchMode?: T;
+        matchString?: T;
+        useModel?: T;
+        modelHost?: T;
+        modelApiKeyEnv?: T;
+        modelPrompt?: T;
+        fetchLinkContent?: T;
+      };
+  redditRules?:
+    | T
+    | {
+        followPostRss?: T;
+        processComments?: T;
+        fetchLinkContent?: T;
+      };
+  wordpressRules?:
+    | T
+    | {
+        followPostRss?: T;
+        processComments?: T;
+        fetchLinkContent?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

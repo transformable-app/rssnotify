@@ -8,6 +8,7 @@ import { Categories } from './collections/Categories'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
+import { FeedAutomations } from './collections/FeedAutomations'
 import { RssFeeds } from './collections/RssFeeds'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
@@ -62,7 +63,7 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
   }),
-  collections: [Pages, Posts, Media, Categories, Users, RssFeeds],
+  collections: [Pages, Posts, Media, Categories, Users, RssFeeds, FeedAutomations],
   cors: [
     getServerSideURL(),
     'https://payloadcms.3twenty9.com',
