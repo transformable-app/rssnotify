@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { APIError } from 'payload'
 
 import { authenticated } from '../access/authenticated'
 
@@ -15,9 +16,34 @@ export const Notifications: CollectionConfig<'notifications'> = {
     update: authenticated,
   },
   admin: {
-    defaultColumns: ['title', 'automation', 'overallStatus', 'matchedAt', 'createdAt'],
+    defaultColumns: ['title', 'sourceURL', 'automation', 'overallStatus', 'matchedAt', 'createdAt'],
     useAsTitle: 'title',
+    components: {
+      list: {
+        afterList: ['@/components/Admin/NotificationsDeleteAll'],
+      },
+    },
   },
+  endpoints: [
+    {
+      path: '/delete-all',
+      method: 'post',
+      handler: async (req) => {
+        if (!req.user) {
+          throw new APIError('Unauthorized', 401)
+        }
+
+        await req.payload.delete({
+          collection: 'notifications',
+          where: { id: { exists: true } },
+          overrideAccess: false,
+          req,
+        })
+
+        return Response.json({ ok: true })
+      },
+    },
+  ],
   fields: [
     {
       name: 'title',
@@ -32,6 +58,11 @@ export const Notifications: CollectionConfig<'notifications'> = {
       name: 'sourceURL',
       label: 'Source URL',
       type: 'text',
+      admin: {
+        components: {
+          Cell: '@/components/Admin/NotificationsSourceUrlCell',
+        },
+      },
     },
     {
       name: 'automation',

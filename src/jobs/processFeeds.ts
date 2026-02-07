@@ -11,7 +11,7 @@ const normalizeContent = (value?: string | null): string => {
 
 const matchesTextRule = (content: string, matchString?: string | null, matchMode?: string | null): boolean => {
   const target = normalizeContent(content)
-  if (!matchString) return true
+  if (!matchString) return false
 
   if (matchMode === 'regex') {
     try {
@@ -33,7 +33,7 @@ const runModelCheck = async (args: {
   const { content, model, prompt } = args
 
   const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) return true
+  if (!apiKey) return false
 
   const baseURL = process.env.OPENAI_BASE_URL || 'https://api.openai.com'
   const endpoint = baseURL.replace(/\/$/, '') + '/v1/chat/completions'
@@ -62,14 +62,18 @@ const runModelCheck = async (args: {
   })
 
   if (!response.ok) {
-    return true
+    return false
   }
 
   const payload = (await response.json()) as {
     choices?: { message?: { content?: string } }[]
   }
 
-  const answer = payload.choices?.[0]?.message?.content?.toLowerCase() || ''
+  const rawAnswer = payload.choices?.[0]?.message?.content || ''
+  if (process.env.DEBUG_FEEDS === 'true') {
+    console.log(`[process-feeds debug] model response (${modelName}): ${rawAnswer}`)
+  }
+  const answer = rawAnswer.toLowerCase()
   return answer.includes('yes') || answer.includes('true')
 }
 
@@ -322,7 +326,15 @@ const getAutomationRules = (automation: FeedAutomation) => {
   return mergeRules(automation.standardRules, null)
 }
 
-const expandItemsForAutomation = async (item: { link?: string }, rules: Record<string, unknown> | null) => {
+type FeedItemWithFlags = Awaited<ReturnType<typeof fetchFeedItems>>[number] & {
+  __isComment?: boolean
+  __isParent?: boolean
+  __parentKey?: string
+  __parentTitle?: string
+  __parentContent?: string
+}
+
+const expandItemsForAutomation = async (item: FeedItemWithFlags, rules: Record<string, unknown> | null) => {
   const followPostRss = Boolean(rules?.followPostRss)
   const processComments = Boolean(rules?.processComments)
 
@@ -331,7 +343,20 @@ const expandItemsForAutomation = async (item: { link?: string }, rules: Record<s
   const cleanedLink = item.link.replace(/\/+$/, '')
   const rssUrl = cleanedLink.endsWith('.rss') ? cleanedLink : `${cleanedLink}.rss`
   try {
-    return await fetchFeedItems(rssUrl)
+    const commentItems = await fetchFeedItems(rssUrl)
+    const parentKey = item.commentsLink || item.link || item.id
+    const parentTitle = item.title
+    const parentContent = item.content
+    return [
+      { ...item, __isParent: true, __parentKey: parentKey, __parentTitle: parentTitle, __parentContent: parentContent },
+      ...commentItems.map((comment) => ({
+        ...comment,
+        __isComment: true,
+        __parentKey: parentKey,
+        __parentTitle: parentTitle,
+        __parentContent: parentContent,
+      })),
+    ]
   } catch {
     return [item]
   }
@@ -395,17 +420,30 @@ export const processFeedsTask: TaskConfig = {
   label: 'Process RSS feeds',
   schedule: [
     {
-      cron: '0 */5 * * * *',
+      cron: '* * * * * *',
       queue: 'feeds',
     },
   ],
   handler: async ({ req }) => {
+    const debug = process.env.DEBUG_FEEDS === 'true'
+    const debugLimit = Number.parseInt(process.env.DEBUG_FEEDS_LIMIT || '5', 10)
+    const debugCounts = new Map<string, number>()
+
+    const logDebug = (key: string, message: string) => {
+      if (!debug) return
+      const count = debugCounts.get(key) ?? 0
+      if (count >= debugLimit) return
+      debugCounts.set(key, count + 1)
+      req.payload.logger.info(message)
+    }
+
     const summary = {
       feedsProcessed: 0,
       itemsFetched: 0,
       notificationsCreated: 0,
       errors: [] as string[],
     }
+    const parentNotified = new Map<string, boolean>()
 
     const [feedsResult, automationsResult] = await Promise.all([
       req.payload.find({
@@ -427,6 +465,12 @@ export const processFeedsTask: TaskConfig = {
     const feeds = feedsResult.docs as RssFeed[]
     const automations = automationsResult.docs as FeedAutomation[]
 
+    if (debug) {
+      req.payload.logger.info(
+        `process-feeds debug: feeds=${feeds.length} automations=${automations.length}`,
+      )
+    }
+
     for (const feed of feeds) {
       const feedAutomations = automations.filter((automation) => shouldProcessAutomation(automation, feed))
       if (!feedAutomations.length) continue
@@ -447,16 +491,58 @@ export const processFeedsTask: TaskConfig = {
 
       for (const item of limitedItems) {
         for (const automation of feedAutomations) {
+          const debugKey = `${feed.id}:${automation.id}`
           const rules = getAutomationRules(automation) as Record<string, unknown> | null
 
           const fetchLinkContent = Boolean(rules?.fetchLinkContent)
           const matchMode = typeof rules?.matchMode === 'string' ? rules.matchMode : undefined
           const matchString = typeof rules?.matchString === 'string' ? rules.matchString : undefined
 
-          const itemsToProcess = automation.type === 'rss' ? [item] : await expandItemsForAutomation(item, rules)
+          const itemsToProcess =
+            automation.type === 'rss'
+              ? [item as FeedItemWithFlags]
+              : await expandItemsForAutomation(item as FeedItemWithFlags, rules)
 
           for (const targetItem of itemsToProcess) {
-            let content = [targetItem.title, targetItem.content].filter(Boolean).join('\n\n')
+            const isRedditComment = automation.type === 'reddit' && targetItem.__isComment
+            let content = isRedditComment
+              ? [targetItem.content].filter(Boolean).join('\n\n')
+              : [targetItem.title, targetItem.content].filter(Boolean).join('\n\n')
+            const modelContent = isRedditComment
+              ? [
+                  targetItem.__parentTitle ? `Parent post title: ${targetItem.__parentTitle}` : null,
+                  targetItem.__parentContent
+                    ? `Parent post content: ${normalizeContent(targetItem.__parentContent).slice(0, 2000)}`
+                    : null,
+                  `Comment: ${content}`,
+                ]
+                  .filter(Boolean)
+                  .join('\n\n')
+              : content
+
+            const parentKey = targetItem.__parentKey
+            if (isRedditComment && parentKey) {
+              if (!parentNotified.has(parentKey)) {
+                const parentAlreadyNotified = await hasNotification({
+                  req,
+                  automationId: automation.id,
+                  sourceURL: parentKey,
+                  title: targetItem.__parentTitle || undefined,
+                })
+
+                if (parentAlreadyNotified) {
+                  parentNotified.set(parentKey, true)
+                }
+              }
+
+              if (parentNotified.get(parentKey)) {
+                logDebug(
+                  debugKey,
+                  `process-feeds debug: skipping comment because parent already notified (parentKey=${parentKey})`,
+                )
+                continue
+              }
+            }
             const linkForContent = automation.type === 'reddit'
               ? targetItem.externalLink || targetItem.link
               : targetItem.link
@@ -468,16 +554,29 @@ export const processFeedsTask: TaskConfig = {
               }
             }
 
-            const matchesRule = matchesTextRule(content, matchString, matchMode)
+            const shouldEvalByModel = Boolean(rules?.useModel)
+            const matchesRule = matchString
+              ? matchesTextRule(content, matchString, matchMode)
+              : shouldEvalByModel
+
+            logDebug(
+              debugKey,
+              `process-feeds debug: feed="${feed.name}" automation="${automation.name}" item="${targetItem.title || 'untitled'}" matchMode="${matchMode || 'contains'}" match="${matchString || ''}" matches=${matchesRule}`,
+            )
 
             if (!matchesRule) continue
 
-            if (rules?.useModel) {
+            if (shouldEvalByModel) {
               const modelOk = await runModelCheck({
-                content,
+                content: modelContent,
                 model: typeof rules.model === 'string' ? rules.model : undefined,
                 prompt: typeof rules.modelPrompt === 'string' ? rules.modelPrompt : undefined,
               })
+
+              logDebug(
+                debugKey,
+                `process-feeds debug: model decision for "${targetItem.title || 'untitled'}" => ${modelOk}`,
+              )
 
               if (!modelOk) continue
             }
@@ -488,6 +587,15 @@ export const processFeedsTask: TaskConfig = {
               sourceURL: targetItem.link || undefined,
               title: targetItem.title || undefined,
             })
+
+            logDebug(
+              debugKey,
+              `process-feeds debug: alreadyNotified for "${targetItem.title || 'untitled'}" => ${alreadyNotified}`,
+            )
+
+            if (alreadyNotified && targetItem.__isParent && parentKey) {
+              parentNotified.set(parentKey, true)
+            }
 
             if (alreadyNotified) continue
 
@@ -624,6 +732,10 @@ export const processFeedsTask: TaskConfig = {
               data: notificationPayload,
               req,
             })
+
+            if (targetItem.__isParent && parentKey) {
+              parentNotified.set(parentKey, true)
+            }
 
             summary.notificationsCreated += 1
           }

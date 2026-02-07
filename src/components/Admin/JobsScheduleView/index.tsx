@@ -5,6 +5,7 @@ import { DefaultTemplate } from '@payloadcms/next/templates'
 import { Gutter } from '@payloadcms/ui/elements/Gutter'
 
 import { tasks } from '@/jobs'
+import JobsResetButton from '@/components/Admin/JobsResetButton'
 import './index.scss'
 
 const JobsScheduleView: React.FC<AdminViewServerProps> = (props) => {
@@ -48,6 +49,7 @@ const JobsScheduleView: React.FC<AdminViewServerProps> = (props) => {
               <p className="description">
                 These are the background tasks configured in Payload and their schedules.
               </p>
+              <JobsResetButton />
 
               <div className="table" style={{ marginTop: '1.5rem' }}>
                 <table>

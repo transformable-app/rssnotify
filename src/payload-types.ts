@@ -136,7 +136,6 @@ export interface Config {
   jobs: {
     tasks: {
       'process-feeds': TaskProcessFeeds;
-      'deliver-notifications': TaskDeliverNotifications;
       schedulePublish: TaskSchedulePublish;
       inline: {
         input: unknown;
@@ -1923,7 +1922,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'process-feeds' | 'deliver-notifications' | 'schedulePublish';
+        taskSlug: 'inline' | 'process-feeds' | 'schedulePublish';
         taskID: string;
         input?:
           | {
@@ -1956,7 +1955,7 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'process-feeds' | 'deliver-notifications' | 'schedulePublish') | null;
+  taskSlug?: ('inline' | 'process-feeds' | 'schedulePublish') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
@@ -3740,14 +3739,6 @@ export interface PayloadJobsStatsSelect<T extends boolean = true> {
  * via the `definition` "TaskProcess-feeds".
  */
 export interface TaskProcessFeeds {
-  input?: unknown;
-  output?: unknown;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TaskDeliver-notifications".
- */
-export interface TaskDeliverNotifications {
   input?: unknown;
   output?: unknown;
 }

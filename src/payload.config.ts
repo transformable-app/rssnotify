@@ -1,7 +1,7 @@
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import sharp from 'sharp'
 import path from 'path'
-import { buildConfig, PayloadRequest } from 'payload'
+import { APIError, buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { Categories } from './collections/Categories'
@@ -88,6 +88,35 @@ export default buildConfig({
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
+  endpoints: [
+    {
+      path: '/jobs/reset',
+      method: 'post',
+      handler: async (req) => {
+        if (!req.user) {
+          throw new APIError('Unauthorized', 401)
+        }
+
+        await req.payload.delete({
+          collection: 'payload-jobs',
+          where: { id: { exists: true } },
+          overrideAccess: false,
+          req,
+        })
+
+        await req.payload.updateGlobal({
+          slug: 'payload-jobs-stats',
+          data: {
+            stats: {},
+          },
+          overrideAccess: false,
+          req,
+        })
+
+        return Response.json({ ok: true })
+      },
+    },
+  ],
   jobs: {
     access: {
       run: ({ req }: { req: PayloadRequest }): boolean => {
