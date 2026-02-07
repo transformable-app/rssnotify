@@ -4,6 +4,9 @@ import type { FeedAutomation, Notification, RssFeed } from '@/payload-types'
 import { fetchFeedItems, fetchLinkText } from './rss'
 
 const MAX_ITEMS_PER_FEED = 25
+const MAX_MODEL_RAW_CHARS = 2000
+const MAX_MODEL_COMMENT_CHARS = 800
+const MAX_MODEL_COMMENT_COUNT = 20
 
 const normalizeContent = (value?: string | null): string => {
   return (value || '').replace(/\s+/g, ' ').trim()
@@ -75,6 +78,40 @@ const runModelCheck = async (args: {
   }
   const answer = rawAnswer.toLowerCase()
   return answer.includes('yes') || answer.includes('true')
+}
+
+const serializeRawData = (raw: unknown, limit = MAX_MODEL_RAW_CHARS): string | null => {
+  if (!raw) return null
+  try {
+    const serialized = JSON.stringify(raw)
+    if (!serialized) return null
+    return serialized.length > limit ? serialized.slice(0, limit) : serialized
+  } catch {
+    return null
+  }
+}
+
+const buildCommentBatchModelContent = (args: {
+  parentItem: FeedItemWithFlags
+  commentItems: FeedItemWithFlags[]
+}): string => {
+  const { parentItem, commentItems } = args
+  const parentTitle = parentItem.title ? `Parent post title: ${parentItem.title}` : null
+  const parentContent = parentItem.content
+    ? `Parent post content: ${normalizeContent(parentItem.content).slice(0, 2000)}`
+    : null
+  const parentRaw = serializeRawData(parentItem.raw)
+  const parentRawSection = parentRaw ? `Parent post raw:\n${parentRaw}` : null
+
+  const commentSections = commentItems.slice(0, MAX_MODEL_COMMENT_COUNT).map((comment, index) => {
+    const author = comment.author ? ` by ${comment.author}` : ''
+    const body = normalizeContent(comment.content).slice(0, MAX_MODEL_COMMENT_CHARS)
+    return `Comment ${index + 1}${author}: ${body}`
+  })
+
+  return [parentTitle, parentContent, parentRawSection, 'Comments:', ...commentSections]
+    .filter(Boolean)
+    .join('\n\n')
 }
 
 type GeneratedPost = {
@@ -503,6 +540,31 @@ export const processFeedsTask: TaskConfig = {
               ? [item as FeedItemWithFlags]
               : await expandItemsForAutomation(item as FeedItemWithFlags, rules)
 
+          const shouldEvalByModel = Boolean(rules?.useModel)
+          const commentItems = itemsToProcess.filter((entry) => entry.__isComment)
+          const parentItemForComments =
+            itemsToProcess.find((entry) => entry.__isParent) || (item as FeedItemWithFlags)
+          const useBatchCommentModel =
+            automation.type === 'reddit' && shouldEvalByModel && commentItems.length > 0
+          let commentModelDecision: boolean | null = null
+
+          if (useBatchCommentModel) {
+            const batchContent = buildCommentBatchModelContent({
+              parentItem: parentItemForComments,
+              commentItems,
+            })
+            commentModelDecision = await runModelCheck({
+              content: batchContent,
+              model: typeof rules.model === 'string' ? rules.model : undefined,
+              prompt: typeof rules.modelPrompt === 'string' ? rules.modelPrompt : undefined,
+            })
+
+            logDebug(
+              debugKey,
+              `process-feeds debug: batch model decision for "${parentItemForComments.title || 'untitled'}" => ${commentModelDecision}`,
+            )
+          }
+
           for (const targetItem of itemsToProcess) {
             const isRedditComment = automation.type === 'reddit' && targetItem.__isComment
             let content = isRedditComment
@@ -554,7 +616,6 @@ export const processFeedsTask: TaskConfig = {
               }
             }
 
-            const shouldEvalByModel = Boolean(rules?.useModel)
             const matchesRule = matchString
               ? matchesTextRule(content, matchString, matchMode)
               : shouldEvalByModel
@@ -567,16 +628,18 @@ export const processFeedsTask: TaskConfig = {
             if (!matchesRule) continue
 
             if (shouldEvalByModel) {
-              const modelOk = await runModelCheck({
+              const modelOk = commentModelDecision ?? (await runModelCheck({
                 content: modelContent,
                 model: typeof rules.model === 'string' ? rules.model : undefined,
                 prompt: typeof rules.modelPrompt === 'string' ? rules.modelPrompt : undefined,
-              })
+              }))
 
-              logDebug(
-                debugKey,
-                `process-feeds debug: model decision for "${targetItem.title || 'untitled'}" => ${modelOk}`,
-              )
+              if (commentModelDecision === null) {
+                logDebug(
+                  debugKey,
+                  `process-feeds debug: model decision for "${targetItem.title || 'untitled'}" => ${modelOk}`,
+                )
+              }
 
               if (!modelOk) continue
             }
