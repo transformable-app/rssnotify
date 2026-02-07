@@ -1694,12 +1694,6 @@ export interface FeedAutomation {
    */
   feeds?: (string | RssFeed)[] | null;
   standardRules?: {
-    matchMode?: ('contains' | 'regex') | null;
-    /**
-     * String or regex pattern to match against feed item content.
-     */
-    matchString?: string | null;
-    useModel?: boolean | null;
     /**
      * Model name to use (e.g., gpt-4o-mini).
      */
@@ -2913,9 +2907,6 @@ export interface FeedAutomationsSelect<T extends boolean = true> {
   standardRules?:
     | T
     | {
-        matchMode?: T;
-        matchString?: T;
-        useModel?: T;
         model?: T;
         modelPrompt?: T;
         createPost?: T;

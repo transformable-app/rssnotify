@@ -12,22 +12,6 @@ const normalizeContent = (value?: string | null): string => {
   return (value || '').replace(/\s+/g, ' ').trim()
 }
 
-const matchesTextRule = (content: string, matchString?: string | null, matchMode?: string | null): boolean => {
-  const target = normalizeContent(content)
-  if (!matchString) return false
-
-  if (matchMode === 'regex') {
-    try {
-      const regex = new RegExp(matchString, 'i')
-      return regex.test(target)
-    } catch {
-      return false
-    }
-  }
-
-  return target.toLowerCase().includes(matchString.toLowerCase())
-}
-
 const runModelCheck = async (args: {
   content: string
   model?: string | null
@@ -532,20 +516,15 @@ export const processFeedsTask: TaskConfig = {
           const rules = getAutomationRules(automation) as Record<string, unknown> | null
 
           const fetchLinkContent = Boolean(rules?.fetchLinkContent)
-          const matchMode = typeof rules?.matchMode === 'string' ? rules.matchMode : undefined
-          const matchString = typeof rules?.matchString === 'string' ? rules.matchString : undefined
-
           const itemsToProcess =
             automation.type === 'rss'
               ? [item as FeedItemWithFlags]
               : await expandItemsForAutomation(item as FeedItemWithFlags, rules)
 
-          const shouldEvalByModel = Boolean(rules?.useModel)
           const commentItems = itemsToProcess.filter((entry) => entry.__isComment)
           const parentItemForComments =
             itemsToProcess.find((entry) => entry.__isParent) || (item as FeedItemWithFlags)
-          const useBatchCommentModel =
-            automation.type === 'reddit' && shouldEvalByModel && commentItems.length > 0
+          const useBatchCommentModel = automation.type === 'reddit' && commentItems.length > 0
           let commentModelDecision: boolean | null = null
 
           if (useBatchCommentModel) {
@@ -616,33 +595,20 @@ export const processFeedsTask: TaskConfig = {
               }
             }
 
-            const matchesRule = matchString
-              ? matchesTextRule(content, matchString, matchMode)
-              : shouldEvalByModel
+            const modelOk = commentModelDecision ?? (await runModelCheck({
+              content: modelContent,
+              model: typeof rules.model === 'string' ? rules.model : undefined,
+              prompt: typeof rules.modelPrompt === 'string' ? rules.modelPrompt : undefined,
+            }))
 
-            logDebug(
-              debugKey,
-              `process-feeds debug: feed="${feed.name}" automation="${automation.name}" item="${targetItem.title || 'untitled'}" matchMode="${matchMode || 'contains'}" match="${matchString || ''}" matches=${matchesRule}`,
-            )
-
-            if (!matchesRule) continue
-
-            if (shouldEvalByModel) {
-              const modelOk = commentModelDecision ?? (await runModelCheck({
-                content: modelContent,
-                model: typeof rules.model === 'string' ? rules.model : undefined,
-                prompt: typeof rules.modelPrompt === 'string' ? rules.modelPrompt : undefined,
-              }))
-
-              if (commentModelDecision === null) {
-                logDebug(
-                  debugKey,
-                  `process-feeds debug: model decision for "${targetItem.title || 'untitled'}" => ${modelOk}`,
-                )
-              }
-
-              if (!modelOk) continue
+            if (commentModelDecision === null) {
+              logDebug(
+                debugKey,
+                `process-feeds debug: model decision for "${targetItem.title || 'untitled'}" => ${modelOk}`,
+              )
             }
+
+            if (!modelOk) continue
 
             const alreadyNotified = await hasNotification({
               req,

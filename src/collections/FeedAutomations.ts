@@ -56,33 +56,10 @@ export const FeedAutomations: CollectionConfig<'feed-automations'> = {
       type: 'group',
       fields: [
         {
-          name: 'matchMode',
-          type: 'select',
-          defaultValue: 'contains',
-          options: [
-            { label: 'Contains', value: 'contains' },
-            { label: 'Regex', value: 'regex' },
-          ],
-        },
-        {
-          name: 'matchString',
-          type: 'text',
-          admin: {
-            description: 'String or regex pattern to match against feed item content.',
-          },
-        },
-        {
-          name: 'useModel',
-          label: 'Evaluate with model',
-          type: 'checkbox',
-          defaultValue: false,
-        },
-        {
           name: 'model',
           label: 'OpenAI model',
           type: 'text',
           admin: {
-            condition: (data, siblingData) => Boolean(siblingData?.useModel),
             description: 'Model name to use (e.g., gpt-4o-mini).',
           },
         },
@@ -90,9 +67,6 @@ export const FeedAutomations: CollectionConfig<'feed-automations'> = {
           name: 'modelPrompt',
           label: 'Model prompt',
           type: 'textarea',
-          admin: {
-            condition: (data, siblingData) => Boolean(siblingData?.useModel),
-          },
         },
         {
           name: 'createPost',
