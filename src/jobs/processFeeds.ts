@@ -22,6 +22,11 @@ const runModelCheck = async (args: {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) return false
 
+  const basePrompt =
+    prompt?.trim() ||
+    'Answer with YES if the content should trigger an alert. Otherwise answer NO.'
+  const systemPrompt = `${basePrompt}\n\nAlways answer with exactly YES or NO. Announcement posts, moderator posts, and welcome posts are always NO.`
+
   const baseURL = process.env.OPENAI_BASE_URL || 'https://api.openai.com'
   const endpoint = baseURL.replace(/\/$/, '') + '/v1/chat/completions'
   const modelName = model || process.env.MODEL_NAME || 'gpt-4o-mini'
@@ -38,7 +43,7 @@ const runModelCheck = async (args: {
       messages: [
         {
           role: 'system',
-          content: prompt || 'Answer with YES if the content should trigger an alert. Otherwise answer NO.',
+          content: systemPrompt,
         },
         {
           role: 'user',
@@ -584,6 +589,28 @@ export const processFeedsTask: TaskConfig = {
                 continue
               }
             }
+            const sourceURL = automation.type === 'reddit'
+              ? targetItem.commentsLink || targetItem.link
+              : targetItem.link
+
+            const alreadyNotified = await hasNotification({
+              req,
+              automationId: automation.id,
+              sourceURL: sourceURL || undefined,
+              title: targetItem.title || undefined,
+            })
+
+            logDebug(
+              debugKey,
+              `process-feeds debug: alreadyNotified for "${targetItem.title || 'untitled'}" => ${alreadyNotified}`,
+            )
+
+            if (alreadyNotified && targetItem.__isParent && parentKey) {
+              parentNotified.set(parentKey, true)
+            }
+
+            if (alreadyNotified) continue
+
             const linkForContent = automation.type === 'reddit'
               ? targetItem.externalLink || targetItem.link
               : targetItem.link
@@ -609,28 +636,6 @@ export const processFeedsTask: TaskConfig = {
             }
 
             if (!modelOk) continue
-
-            const alreadyNotified = await hasNotification({
-              req,
-              automationId: automation.id,
-              sourceURL: targetItem.link || undefined,
-              title: targetItem.title || undefined,
-            })
-
-            logDebug(
-              debugKey,
-              `process-feeds debug: alreadyNotified for "${targetItem.title || 'untitled'}" => ${alreadyNotified}`,
-            )
-
-            if (alreadyNotified && targetItem.__isParent && parentKey) {
-              parentNotified.set(parentKey, true)
-            }
-
-            if (alreadyNotified) continue
-
-            const sourceURL = automation.type === 'reddit'
-              ? targetItem.commentsLink || targetItem.link
-              : targetItem.link
 
             let createdPostId: string | null = null
             let createdMediaId: string | null = null

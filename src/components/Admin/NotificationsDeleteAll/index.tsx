@@ -33,8 +33,8 @@ const NotificationsDeleteAll: React.FC = () => {
   }
 
   return (
-    <div style={{ marginTop: '1rem' }}>
-      <Button onClick={handleDelete} disabled={isDeleting} appearance="danger">
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <Button onClick={handleDelete} disabled={isDeleting} buttonStyle="secondary">
         {isDeleting ? 'Deleting...' : 'Delete all notifications'}
       </Button>
       {error ? (

@@ -201,7 +201,7 @@ export const stripHtml = (html: string): string => {
 
 export const fetchText = async (url: string, timeoutMs = 15000): Promise<string> => {
   const minDelay = readEnvSeconds('RSS_FETCH_JITTER_MIN_SECONDS', 1)
-  const maxDelay = readEnvSeconds('RSS_FETCH_JITTER_MAX_SECONDS', 20)
+  const maxDelay = readEnvSeconds('RSS_FETCH_JITTER_MAX_SECONDS', 10)
   await sleep(randomDelayMs(minDelay, maxDelay))
 
   const controller = new AbortController()
