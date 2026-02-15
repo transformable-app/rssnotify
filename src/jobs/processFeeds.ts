@@ -1,4 +1,4 @@
-import type { TaskConfig } from 'payload'
+import type { PayloadRequest, TaskConfig, Where } from 'payload'
 import type { FeedAutomation, Notification, RssFeed } from '@/payload-types'
 
 import { fetchFeedItems, fetchLinkText } from './rss'
@@ -389,20 +389,26 @@ const expandItemsForAutomation = async (item: FeedItemWithFlags, rules: Record<s
 }
 
 const hasNotification = async (args: {
-  req: Parameters<NonNullable<TaskConfig['handler']>>[0]['req']
+  req: PayloadRequest
   automationId: string
   sourceURL?: string
   title?: string
 }): Promise<boolean> => {
   const { req, automationId, sourceURL, title } = args
 
-  const where = sourceURL
+  const where: Where | null = sourceURL
     ? {
-        and: [{ automation: { equals: automationId } }, { sourceURL: { equals: sourceURL } }],
+        and: [
+          { automation: { equals: automationId } },
+          { sourceURL: { equals: sourceURL } },
+        ],
       }
     : title
       ? {
-          and: [{ automation: { equals: automationId } }, { title: { equals: title } }],
+          and: [
+            { automation: { equals: automationId } },
+            { title: { equals: title } },
+          ],
         }
       : null
 
@@ -528,7 +534,8 @@ export const processFeedsTask: TaskConfig = {
 
           const commentItems = itemsToProcess.filter((entry) => entry.__isComment)
           const parentItemForComments =
-            itemsToProcess.find((entry) => entry.__isParent) || (item as FeedItemWithFlags)
+            itemsToProcess.find((entry) => (entry as FeedItemWithFlags).__isParent) ||
+            (item as FeedItemWithFlags)
           const useBatchCommentModel = automation.type === 'reddit' && commentItems.length > 0
           let commentModelDecision: boolean | null = null
 
@@ -539,8 +546,8 @@ export const processFeedsTask: TaskConfig = {
             })
             commentModelDecision = await runModelCheck({
               content: batchContent,
-              model: typeof rules.model === 'string' ? rules.model : undefined,
-              prompt: typeof rules.modelPrompt === 'string' ? rules.modelPrompt : undefined,
+              model: typeof rules?.model === 'string' ? rules.model : undefined,
+              prompt: typeof rules?.modelPrompt === 'string' ? rules.modelPrompt : undefined,
             })
 
             logDebug(
@@ -550,7 +557,7 @@ export const processFeedsTask: TaskConfig = {
           }
 
           for (const targetItem of itemsToProcess) {
-            const isRedditComment = automation.type === 'reddit' && targetItem.__isComment
+            const isRedditComment = automation.type === 'reddit' && (targetItem as FeedItemWithFlags).__isComment
             let content = isRedditComment
               ? [targetItem.content].filter(Boolean).join('\n\n')
               : [targetItem.title, targetItem.content].filter(Boolean).join('\n\n')
@@ -605,7 +612,7 @@ export const processFeedsTask: TaskConfig = {
               `process-feeds debug: alreadyNotified for "${targetItem.title || 'untitled'}" => ${alreadyNotified}`,
             )
 
-            if (alreadyNotified && targetItem.__isParent && parentKey) {
+            if (alreadyNotified && (targetItem as FeedItemWithFlags).__isParent && parentKey) {
               parentNotified.set(parentKey, true)
             }
 
@@ -624,8 +631,8 @@ export const processFeedsTask: TaskConfig = {
 
             const modelOk = commentModelDecision ?? (await runModelCheck({
               content: modelContent,
-              model: typeof rules.model === 'string' ? rules.model : undefined,
-              prompt: typeof rules.modelPrompt === 'string' ? rules.modelPrompt : undefined,
+              model: typeof rules?.model === 'string' ? rules.model : undefined,
+              prompt: typeof rules?.modelPrompt === 'string' ? rules.modelPrompt : undefined,
             }))
 
             if (commentModelDecision === null) {
@@ -763,11 +770,15 @@ export const processFeedsTask: TaskConfig = {
 
             await req.payload.create({
               collection: 'notifications',
-              data: notificationPayload,
+              data: {
+                ...notificationPayload,
+                title: notificationPayload.title ?? 'Feed match',
+              } as unknown as Omit<Notification, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>,
+              draft: false,
               req,
             })
 
-            if (targetItem.__isParent && parentKey) {
+            if ((targetItem as FeedItemWithFlags).__isParent && parentKey) {
               parentNotified.set(parentKey, true)
             }
 

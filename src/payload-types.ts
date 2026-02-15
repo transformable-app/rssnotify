@@ -71,10 +71,10 @@ export interface Config {
     posts: Post;
     media: Media;
     categories: Category;
-    users: User;
     'rss-feeds': RssFeed;
     'feed-automations': FeedAutomation;
     notifications: Notification;
+    users: User;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -96,10 +96,10 @@ export interface Config {
     posts: PostsSelect<false> | PostsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
-    users: UsersSelect<false> | UsersSelect<true>;
     'rss-feeds': RssFeedsSelect<false> | RssFeedsSelect<true>;
     'feed-automations': FeedAutomationsSelect<false> | FeedAutomationsSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -120,6 +120,7 @@ export interface Config {
     footer: Footer;
     'index-pages': IndexPage;
     settings: Setting;
+    jobs: Job;
     'payload-jobs-stats': PayloadJobsStat;
   };
   globalsSelect: {
@@ -127,6 +128,7 @@ export interface Config {
     footer: FooterSelect<false> | FooterSelect<true>;
     'index-pages': IndexPagesSelect<false> | IndexPagesSelect<true>;
     settings: SettingsSelect<false> | SettingsSelect<true>;
+    jobs: JobsSelect<false> | JobsSelect<true>;
     'payload-jobs-stats': PayloadJobsStatsSelect<false> | PayloadJobsStatsSelect<true>;
   };
   locale: null;
@@ -136,6 +138,7 @@ export interface Config {
   jobs: {
     tasks: {
       'process-feeds': TaskProcessFeeds;
+      'deliver-notifications': TaskDeliverNotifications;
       schedulePublish: TaskSchedulePublish;
       inline: {
         input: unknown;
@@ -1916,7 +1919,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'process-feeds' | 'schedulePublish';
+        taskSlug: 'inline' | 'process-feeds' | 'deliver-notifications' | 'schedulePublish';
         taskID: string;
         input?:
           | {
@@ -1949,7 +1952,7 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'process-feeds' | 'schedulePublish') | null;
+  taskSlug?: ('inline' | 'process-feeds' | 'deliver-notifications' | 'schedulePublish') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
@@ -1989,10 +1992,6 @@ export interface PayloadLockedDocument {
         value: string | Category;
       } | null)
     | ({
-        relationTo: 'users';
-        value: string | User;
-      } | null)
-    | ({
         relationTo: 'rss-feeds';
         value: string | RssFeed;
       } | null)
@@ -2003,6 +2002,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'notifications';
         value: string | Notification;
+      } | null)
+    | ({
+        relationTo: 'users';
+        value: string | User;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2861,29 +2864,6 @@ export interface CategoriesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
- */
-export interface UsersSelect<T extends boolean = true> {
-  name?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
-    | T
-    | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
-      };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "rss-feeds_select".
  */
 export interface RssFeedsSelect<T extends boolean = true> {
@@ -2968,6 +2948,29 @@ export interface NotificationsSelect<T extends boolean = true> {
   data?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users_select".
+ */
+export interface UsersSelect<T extends boolean = true> {
+  name?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3529,6 +3532,15 @@ export interface Setting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "jobs".
+ */
+export interface Job {
+  id: string;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-jobs-stats".
  */
 export interface PayloadJobsStat {
@@ -3717,6 +3729,15 @@ export interface SettingsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "jobs_select".
+ */
+export interface JobsSelect<T extends boolean = true> {
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-jobs-stats_select".
  */
 export interface PayloadJobsStatsSelect<T extends boolean = true> {
@@ -3730,6 +3751,14 @@ export interface PayloadJobsStatsSelect<T extends boolean = true> {
  * via the `definition` "TaskProcess-feeds".
  */
 export interface TaskProcessFeeds {
+  input?: unknown;
+  output?: unknown;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskDeliver-notifications".
+ */
+export interface TaskDeliverNotifications {
   input?: unknown;
   output?: unknown;
 }

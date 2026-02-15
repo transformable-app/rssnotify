@@ -1,93 +1,58 @@
-import type { AdminViewServerProps } from 'payload'
-
 import React from 'react'
-import { DefaultTemplate } from '@payloadcms/next/templates'
 import { Gutter } from '@payloadcms/ui/elements/Gutter'
 
 import { tasks } from '@/jobs'
 import JobsResetButton from '@/components/Admin/JobsResetButton'
 import './index.scss'
 
-const JobsScheduleView: React.FC<AdminViewServerProps> = (props) => {
-  const {
-    i18n,
-    initPageResult,
-    locale,
-    params,
-    payload,
-    permissions,
-    req,
-    searchParams,
-    user,
-    viewActions,
-    visibleEntities,
-  } = props
-
-  const resolvedVisibleEntities =
-    initPageResult?.visibleEntities ?? visibleEntities ?? { collections: [], globals: [] }
-  const resolvedPermissions = initPageResult?.permissions ?? permissions
-
+const JobsScheduleView: React.FC = () => {
   return (
-    <DefaultTemplate
-      i18n={i18n}
-      locale={locale}
-      params={params}
-      payload={payload}
-      permissions={resolvedPermissions}
-      req={req}
-      searchParams={searchParams}
-      user={user}
-      viewActions={viewActions}
-      viewType="dashboard"
-      visibleEntities={resolvedVisibleEntities}
-    >
-      <div className="payload__container jobs-schedule-view">
-        <Gutter>
-          <div className="payload__flex">
-            <div className="payload__flex__content">
-              <h1>Jobs & Schedule</h1>
-              <p className="description">
-                These are the background tasks configured in Payload and their schedules.
-              </p>
-              <JobsResetButton />
+    <div className="payload__container jobs-schedule-view">
+      <Gutter>
+        <div className="payload__flex">
+          <div className="payload__flex__content">
+            <h1>Jobs</h1>
+            <p className="description">
+              These are the background tasks configured in Payload and their schedules.
+            </p>
+            <JobsResetButton />
 
-              <div className="table" style={{ marginTop: '1.5rem' }}>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Label</th>
-                      <th>Slug</th>
-                      <th>Schedule</th>
-                      <th>Frequency</th>
-                      <th>Queue</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tasks.map((task) => {
-                      const schedule = task.schedule ?? []
-                      const scheduleEntries =
-                        schedule.length > 0 ? schedule : [{ cron: 'Not scheduled', queue: '—' }]
+            <div className="table" style={{ marginTop: '1.5rem' }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Label</th>
+                    <th>Slug</th>
+                    <th>Schedule</th>
+                    <th>Frequency</th>
+                    <th>Queue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tasks.map((task) => {
+                    const schedule = task.schedule ?? []
+                    const scheduleEntries =
+                      schedule.length > 0 ? schedule : [{ cron: 'Not scheduled', queue: '—' }]
 
-                      return scheduleEntries.map((entry, index) => (
-                        <tr key={`${task.slug}-${entry.cron}-${index}`}>
-                          <td>{task.label || task.slug}</td>
-                          <td>{task.slug}</td>
-                          <td>
-                            <code>{entry.cron}</code>
-                          </td>
-                          <td>{describeCron(entry.cron)}</td>
-                          <td>{entry.queue || 'default'}</td>
-                        </tr>
-                      ))
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                    return scheduleEntries.map((entry, index) => (
+                      <tr key={`${task.slug}-${entry.cron}-${index}`}>
+                        <td>{task.label || task.slug}</td>
+                        <td>{task.slug}</td>
+                        <td>
+                          <code>{entry.cron}</code>
+                        </td>
+                        <td>{describeCron(entry.cron)}</td>
+                        <td>{entry.queue || 'default'}</td>
+                      </tr>
+                    ))
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
-        </Gutter>
-      </div>
-    </DefaultTemplate>
+        </div>
+      </Gutter>
+    </div>
   )
 }
 

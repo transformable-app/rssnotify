@@ -34,7 +34,7 @@ const JobsResetButton: React.FC = () => {
 
   return (
     <div style={{ marginTop: '1rem' }}>
-      <Button onClick={handleReset} disabled={isResetting} appearance="danger">
+      <Button onClick={handleReset} disabled={isResetting} buttonStyle="error">
         {isResetting ? 'Resetting...' : 'Reset all jobs'}
       </Button>
       {error ? (

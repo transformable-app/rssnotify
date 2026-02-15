@@ -1,6 +1,7 @@
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import sharp from 'sharp'
 import path from 'path'
+import { en } from 'payload/i18n/en'
 import { APIError, buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
 
@@ -15,6 +16,7 @@ import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { IndexPages } from './IndexPages/config'
+import { JobsGlobal } from './JobsGlobal/config'
 import { Settings } from './Settings/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
@@ -33,13 +35,6 @@ export default buildConfig({
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
       beforeDashboard: ['@/components/BeforeDashboard'],
-      afterNavLinks: ['@/components/Admin/JobsNavLink'],
-      views: {
-        jobs: {
-          Component: '@/components/Admin/JobsScheduleView',
-          path: '/jobs',
-        },
-      },
     },
     importMap: {
       baseDir: path.resolve(dirname),
@@ -73,7 +68,7 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
   }),
-  collections: [Pages, Posts, Media, Categories, Users, RssFeeds, FeedAutomations, Notifications],
+  collections: [Pages, Posts, Media, Categories, RssFeeds, FeedAutomations, Notifications, Users],
   cors: [
     getServerSideURL(),
     'https://payloadcms.3twenty9.com',
@@ -81,7 +76,18 @@ export default buildConfig({
   folders: {
     browseByFolder: false,
   },
-  globals: [Header, Footer, IndexPages, Settings],
+  i18n: {
+    translations: {
+      en: {
+        ...en.translations,
+        general: {
+          ...en.translations.general,
+          collections: 'rssnotify',
+        },
+      },
+    },
+  },
+  globals: [Header, Footer, IndexPages, Settings, JobsGlobal],
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,

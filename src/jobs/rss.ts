@@ -270,7 +270,9 @@ export const parseFeedItems = (xml: string): FeedItem[] => {
           : decodedContent
         : undefined
       const updated = normalizeText(entry.updated) ?? normalizeText(entry.published)
-      const author = normalizeText(entry.author?.name) ?? normalizeText(entry.author)
+      const author =
+        normalizeText((entry.author as { name?: string } | undefined)?.name) ??
+        normalizeText(entry.author as string | undefined)
       const thumbnailUrl = normalizeMediaUrl(entry['media:thumbnail'])
       const link = redditMeta.commentsLink ?? atomLink ?? entryId
 

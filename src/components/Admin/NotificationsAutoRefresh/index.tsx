@@ -57,7 +57,7 @@ const NotificationsAutoRefresh: React.FC = () => {
       <Button
         onClick={toggleEnabled}
         buttonStyle="secondary"
-        title="Toggle auto refresh (15s)"
+        aria-label="Toggle auto refresh (15s)"
       >
         {enabled ? 'Auto refresh: on' : 'Auto refresh: off'}
       </Button>

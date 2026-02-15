@@ -1,5 +1,5 @@
 import React from 'react'
-import type { TextFieldCellComponent } from 'payload'
+import type { DefaultCellComponentProps } from 'payload'
 import { ExternalLink } from 'lucide-react'
 
 const coerceUrl = (value: unknown): string | null => {
@@ -14,8 +14,8 @@ const coerceUrl = (value: unknown): string | null => {
   return null
 }
 
-const NotificationsSourceUrlCell: TextFieldCellComponent = (props) => {
-  const url = coerceUrl(props.value ?? (props as { cellData?: unknown }).cellData)
+const NotificationsSourceUrlCell: React.FC<DefaultCellComponentProps> = (props) => {
+  const url = coerceUrl(props.cellData)
   if (!url) return <span style={{ color: 'var(--theme-elevation-400)' }}>—</span>
 
   return (

@@ -16,6 +16,9 @@ const dirname = path.dirname(filename)
 
 export const Media: CollectionConfig = {
   slug: 'media',
+  admin: {
+    hidden: true,
+  },
   folders: true,
   access: {
     create: authenticated,

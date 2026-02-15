@@ -4,13 +4,13 @@ import { Link } from '@payloadcms/ui/elements/Link'
 import { formatAdminURL } from 'payload/shared'
 import React from 'react'
 
-const JobsNavLink: React.FC<AdminViewServerProps> = ({ payload, req }) => {
+const JobsNavLink: React.FC<AdminViewServerProps> = ({ payload, initPageResult }) => {
   const href = formatAdminURL({
     adminRoute: payload.config.routes.admin,
     path: '/jobs',
   })
 
-  const currentPath = req?.originalUrl || req?.url || ''
+  const currentPath = initPageResult?.req?.url ?? ''
   const isActive = currentPath.startsWith(href) && ['/', undefined].includes(currentPath[href.length])
   const label = (
     <>

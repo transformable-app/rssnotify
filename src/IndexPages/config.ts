@@ -37,6 +37,7 @@ export const IndexPages: GlobalConfig = {
     read: () => true,
   },
   admin: {
+    hidden: true,
     group: 'Settings',
   },
   fields: [
@@ -132,4 +133,3 @@ export const IndexPages: GlobalConfig = {
     afterChange: [revalidateIndexPages],
   },
 }
-
