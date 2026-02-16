@@ -6,7 +6,6 @@ import { Media } from '@/components/Media'
 import { PageRange } from '@/components/PageRange'
 import { Pagination } from '@/components/Pagination'
 import RichText from '@/components/RichText'
-import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 import { generateMeta } from '@/utilities/generateMeta'
 import configPromise from '@payload-config'
@@ -56,12 +55,6 @@ export default async function Page() {
       {indexPages?.postsContent && (
         <div className="container mb-16">
           <RichText data={indexPages.postsContent} enableGutter={false} />
-        </div>
-      )}
-
-      {indexPages?.postsBlocks && indexPages.postsBlocks.length > 0 && (
-        <div className="container mb-16">
-          <RenderBlocks blocks={indexPages.postsBlocks as Parameters<typeof RenderBlocks>[0]['blocks']} />
         </div>
       )}
 
