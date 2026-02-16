@@ -60,13 +60,19 @@ export const FeedAutomations: CollectionConfig<'feed-automations'> = {
           label: 'OpenAI model',
           type: 'text',
           admin: {
-            description: 'Model name to use (e.g., gpt-4o-mini).',
+            description: 'Model name to use (e.g., gpt-4o-mini, openai/gpt-oss-120b, qwen/qwen3-next-80b).',
           },
         },
         {
           name: 'modelPrompt',
           label: 'Model prompt',
           type: 'textarea',
+          admin: {
+            description:
+              'Use "Yes" and "No" in the prompt to guide the AI in deciding whether to send a notification based on the RSS feed item content.',
+            placeholder:
+              'Yes if post is about self hosted open source apps. No if post is about self hosted email.',
+          },
         },
         {
           name: 'notifyEveryPost',
