@@ -5,7 +5,8 @@ import { unstable_cache } from 'next/cache'
 export async function getRedirects(depth = 1) {
   const payload = await getPayload({ config: configPromise })
 
-  const { docs: redirects } = await payload.find({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- redirects from plugin
+  const { docs: redirects } = await (payload as any).find({
     collection: 'redirects',
     depth,
     limit: 0,

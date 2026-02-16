@@ -2,7 +2,7 @@ import React from 'react'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/utilities/ui'
 import { CMSLink } from '@/components/Link'
-import type { Page, Post } from '@/payload-types'
+import type { LegacyPage, LegacyPost } from '@/types/legacy'
 
 export type ContentPricingPlan = {
   id?: string
@@ -20,7 +20,7 @@ export type ContentPricingPlan = {
     newTab?: boolean
     reference?: {
       relationTo?: 'pages' | 'posts'
-      value?: Page | Post | string | number
+      value?: LegacyPage | LegacyPost | string | number
     }
   }
 }

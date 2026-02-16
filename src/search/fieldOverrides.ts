@@ -32,7 +32,8 @@ export const searchFields: Field[] = [
         name: 'image',
         label: 'Image',
         type: 'upload',
-        relationTo: 'media',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- template media collection not in config
+        relationTo: 'media' as any,
       },
     ],
   },

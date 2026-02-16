@@ -1,13 +1,13 @@
-import type { Media, User } from '@/payload-types'
-import { RequiredDataFromCollectionSlug } from 'payload'
+import type { User } from '@/payload-types'
+import type { LegacyMedia, LegacyPost } from '@/types/legacy'
 
 export type PostArgs = {
-  heroImage: Media
-  blockImage: Media
+  heroImage: LegacyMedia
+  blockImage: LegacyMedia
   author: User
 }
 
-export const post1: (args: PostArgs) => RequiredDataFromCollectionSlug<'posts'> = ({
+export const post1: (args: PostArgs) => LegacyPost = ({
   heroImage,
   blockImage,
   author,

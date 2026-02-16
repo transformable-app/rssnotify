@@ -60,7 +60,8 @@ export const hero: Field = {
     {
       name: 'media',
       type: 'upload',
-      relationTo: 'media',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- template media collection not in config
+      relationTo: 'media' as any,
       label: 'Media',
       required: true,
       admin: {
@@ -71,7 +72,8 @@ export const hero: Field = {
     {
       name: 'logo',
       type: 'upload',
-      relationTo: 'media',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- template media collection not in config
+      relationTo: 'media' as any,
       label: 'Hero Logo',
       admin: {
         condition: (_, siblingData) => siblingData?.type === 'highImpact',
@@ -102,7 +104,8 @@ export const hero: Field = {
         {
           name: 'media',
           type: 'upload',
-          relationTo: 'media',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- template media collection not in config
+      relationTo: 'media' as any,
           label: 'Background',
           required: true,
           admin: { description: 'Background image for this slide.' },
@@ -110,7 +113,8 @@ export const hero: Field = {
         {
           name: 'logo',
           type: 'upload',
-          relationTo: 'media',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- template media collection not in config
+      relationTo: 'media' as any,
           label: 'Logo',
           admin: { description: 'Logo shown on the right side of the slide.' },
         },

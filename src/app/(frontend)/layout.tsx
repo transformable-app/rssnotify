@@ -21,11 +21,27 @@ import { getCachedGlobal } from '@/utilities/getGlobals'
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
 import { getMediaUrl } from '@/utilities/getMediaUrl'
-import type { Header as HeaderType } from '@/payload-types'
+
+/** Header global shape (Header global not in current Payload config) */
+interface HeaderType {
+  metaTags?: string | null
+  favicon?: { url?: string } | string | null
+  appleTouchIcon?: { url?: string } | string | null
+  updatedAt?: string | null
+}
+
+const defaultHeader: HeaderType = {}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { isEnabled } = await draftMode()
-  const headerData: HeaderType = await getCachedGlobal('header', 1)()
+  let headerData: HeaderType = defaultHeader
+  try {
+    headerData = await (
+      getCachedGlobal as (slug: string, depth: number) => () => Promise<HeaderType>
+    )('header', 1)()
+  } catch {
+    // Header global not in Payload config; use defaults
+  }
 
   const metaTags = headerData?.metaTags || null
 
@@ -94,7 +110,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const headerData: HeaderType = await getCachedGlobal('header', 1)()
+  let headerData: HeaderType = defaultHeader
+  try {
+    headerData = await (
+      getCachedGlobal as (slug: string, depth: number) => () => Promise<HeaderType>
+    )('header', 1)()
+  } catch {
+    // Header global not in Payload config
+  }
 
   // Get favicon URL from Header global
   const favicon =

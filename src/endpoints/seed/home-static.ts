@@ -1,7 +1,7 @@
-import type { RequiredDataFromCollectionSlug } from 'payload'
+import type { LegacyPage } from '@/types/legacy'
 
-// Used for pre-seeded content so that the homepage is not empty
-export const homeStatic: RequiredDataFromCollectionSlug<'pages'> = {
+// Used for pre-seeded content so that the homepage is not empty (pages collection not in config)
+export const homeStatic: LegacyPage = {
   slug: 'home',
   _status: 'published',
   hero: {

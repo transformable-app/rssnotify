@@ -341,7 +341,7 @@ export const processFeedsTask: TaskConfig = {
 
           for (const targetItem of itemsToProcess) {
             const isRedditComment = automation.type === 'reddit' && (targetItem as FeedItemWithFlags).__isComment
-            let content = isRedditComment
+            const content = isRedditComment
               ? [targetItem.content].filter(Boolean).join('\n\n')
               : [targetItem.title, targetItem.content].filter(Boolean).join('\n\n')
             const modelContent = isRedditComment

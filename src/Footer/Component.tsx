@@ -16,7 +16,9 @@ import {
   Send,
 } from 'lucide-react'
 
-import type { Footer } from '@/payload-types'
+import type { LegacyFooter } from '@/types/legacy'
+
+const emptyFooter: LegacyFooter = {}
 
 import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
 import { CMSLink } from '@/components/Link'
@@ -45,7 +47,14 @@ const contactIconMap: Record<string, React.ComponentType<{ className?: string }>
 }
 
 export async function Footer() {
-  const footerData = (await getCachedGlobal('footer', 1)()) as Footer
+  let footerData: LegacyFooter = emptyFooter
+  try {
+    footerData = await (
+      getCachedGlobal as unknown as (slug: string, depth: number) => () => Promise<LegacyFooter>
+    )('footer', 1)()
+  } catch {
+    // Footer global not in Payload config
+  }
 
   const navItems = footerData?.navItems || []
   const socialIcons = footerData?.socialIcons || []
@@ -78,46 +87,46 @@ export async function Footer() {
           aria-label="Call to action"
         >
           <div className="container py-12 md:py-16 flex flex-col items-center text-center gap-8">
-            {(footerData?.ctaPreHeading || footerData?.ctaHeading || footerData?.ctaHeadingAccent) && (
+            {Boolean(footerData?.ctaPreHeading || footerData?.ctaHeading || footerData?.ctaHeadingAccent) && (
               <div className="flex flex-col gap-3">
-                {footerData.ctaPreHeading && (
+                {Boolean(footerData.ctaPreHeading) && (
                   <p className="text-sm font-medium uppercase tracking-widest text-orange-500">
                     {footerData.ctaPreHeading}
                   </p>
                 )}
-                {(footerData.ctaHeading || footerData.ctaHeadingAccent) && (
+                {Boolean(footerData.ctaHeading || footerData.ctaHeadingAccent) && (
                   <h2 className="font-anton text-4xl md:text-6xl lg:text-7xl font-normal uppercase tracking-tight">
-                    {footerData.ctaHeading && <span>{footerData.ctaHeading}</span>}
-                    {(footerData.ctaHeading && footerData.ctaHeadingAccent) && <br />}
-                    {footerData.ctaHeadingAccent && (
+                    {Boolean(footerData.ctaHeading) && <span>{footerData.ctaHeading}</span>}
+                    {Boolean(footerData.ctaHeading && footerData.ctaHeadingAccent) && <br />}
+                    {Boolean(footerData.ctaHeadingAccent) && (
                       <span className="text-orange-500">{footerData.ctaHeadingAccent}</span>
                     )}
                   </h2>
                 )}
               </div>
             )}
-            {footerData?.ctaDescription && (
+            {Boolean(footerData?.ctaDescription) && (
               <p className="text-base md:text-lg max-w-2xl text-[#e8e4dc]">
                 {footerData.ctaDescription}
               </p>
             )}
-            {hasCtaButton && ctaButtonLink && (
+            {hasCtaButton && ctaButtonLink ? (
               <CMSLink
                 type={ctaButtonLink.type ?? 'custom'}
                 url={ctaButtonLink.type === 'custom' ? ctaButtonLink.url ?? undefined : undefined}
-                reference={ctaButtonLink.type === 'reference' ? ctaButtonLink.reference ?? undefined : undefined}
+                reference={ctaButtonLink.type === 'reference' ? (ctaButtonLink.reference as React.ComponentProps<typeof CMSLink>['reference']) ?? undefined : undefined}
                 label={`${ctaButtonLink.label} →`}
                 newTab={ctaButtonLink.newTab ?? false}
                 appearance="default"
                 className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3 text-sm font-semibold uppercase text-white transition-colors hover:bg-orange-600"
               />
-            )}
-            {hasCtaButton && contactItems.length > 0 && (
+            ) : null}
+            {Boolean(hasCtaButton && contactItems.length > 0) && (
               <hr className="w-full max-w-2xl border-[#3d3520]" />
             )}
             {contactItems.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
-                {contactItems.map((item, i) => {
+                {(contactItems as Array<{ label?: string; value?: string; type?: string }>).map((item, i) => {
                   if (!item?.label || !item?.value) return null
                   const Icon = contactIconMap[item.type ?? 'other'] ?? Globe
                   const href =
@@ -155,7 +164,7 @@ export async function Footer() {
           <Link className="flex items-center justify-center md:justify-start" href="/">
             {footerData?.logo && typeof footerData.logo === 'object' ? (
               <Media
-                resource={footerData.logo}
+                resource={footerData.logo as React.ComponentProps<typeof Media>['resource']}
                 imgClassName="max-w-[9.375rem] w-full h-[34px]"
                 priority
                 loading="eager"
@@ -171,13 +180,13 @@ export async function Footer() {
             </div>
             <div className="flex flex-col md:flex-row items-center gap-4">
               <nav className="flex flex-col md:flex-row gap-4">
-                {navItems.map(({ link }, i) => {
-                  return <CMSLink className="text-white" key={i} {...link} />
+                {(navItems as Array<{ link?: Record<string, unknown> }>).map(({ link }, i) => {
+                  return link ? <CMSLink className="text-white" key={i} {...(link as React.ComponentProps<typeof CMSLink>)} /> : null
                 })}
               </nav>
-              {socialIcons.length > 0 && (
+              {Array.isArray(socialIcons) && socialIcons.length > 0 && (
                 <div className="flex items-center gap-3">
-                  {socialIcons.map((social, i) => {
+                  {(socialIcons as Array<{ platform?: string; url?: string; newTab?: boolean }>).map((social, i) => {
                     if (!social?.platform || !social?.url) return null
                     const IconComponent = socialIconMap[social.platform] || Globe
                     return (

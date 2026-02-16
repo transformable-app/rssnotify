@@ -5,7 +5,7 @@ import { ReorderModal } from './ReorderModal'
 
 function ReorderButton() {
   const [showModal, setShowModal] = useState(false)
-  const [collection, setCollection] = useState<string | null>(null)
+  const [collection, _setCollection] = useState<string | null>(null)
 
   useEffect(() => {
     // No collections use drag reorder in this project

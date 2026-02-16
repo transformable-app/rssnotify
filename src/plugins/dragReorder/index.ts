@@ -1,4 +1,4 @@
-import type { Config, Plugin, PayloadRequest } from 'payload'
+import type { Config, CollectionSlug, Plugin, PayloadRequest } from 'payload'
 import { revalidateIndexOnOrderChange } from './hooks/revalidateIndexOnOrderChange'
 
 interface DragReorderPluginConfig {
@@ -32,7 +32,7 @@ export const dragReorderPlugin =
               // Don't disable revalidation - let the hook handle it
               const updates = ids.map((id: string, index: number) =>
                 req.payload.update({
-                  collection: collection.slug as any,
+                  collection: collection.slug as CollectionSlug,
                   id,
                   data: {
                     [fieldName]: index + 1,

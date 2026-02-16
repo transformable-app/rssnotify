@@ -1,12 +1,11 @@
-import type { RequiredDataFromCollectionSlug } from 'payload'
-import type { Media } from '@/payload-types'
+import type { LegacyMedia, LegacyPage } from '@/types/legacy'
 
 type HomeArgs = {
-  heroImage: Media
-  metaImage: Media
+  heroImage: LegacyMedia
+  metaImage: LegacyMedia
 }
 
-export const home: (args: HomeArgs) => RequiredDataFromCollectionSlug<'pages'> = ({
+export const home: (args: HomeArgs) => LegacyPage = ({
   heroImage,
   metaImage,
 }) => {

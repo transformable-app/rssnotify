@@ -75,7 +75,8 @@ export const link: LinkType = ({ appearances, disableLabel = false, overrides = 
         condition: (_, siblingData) => siblingData?.type === 'reference',
       },
       label: 'Document to link to',
-      relationTo: ['pages', 'posts'],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- template collections not in config
+      relationTo: ['pages', 'posts'] as any,
       required: true,
     },
     {

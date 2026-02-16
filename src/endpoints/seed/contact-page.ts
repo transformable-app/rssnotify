@@ -1,11 +1,10 @@
-import type { Form } from '@/payload-types'
-import { RequiredDataFromCollectionSlug } from 'payload'
+import type { LegacyForm, LegacyPage } from '@/types/legacy'
 
 type ContactArgs = {
-  contactForm: Form
+  contactForm: LegacyForm
 }
 
-export const contact: (args: ContactArgs) => RequiredDataFromCollectionSlug<'pages'> = ({
+export const contact: (args: ContactArgs) => LegacyPage = ({
   contactForm,
 }) => {
   return {

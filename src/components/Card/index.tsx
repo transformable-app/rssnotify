@@ -4,11 +4,11 @@ import useClickableCard from '@/utilities/useClickableCard'
 import Link from 'next/link'
 import React, { Fragment } from 'react'
 
-import type { Media as MediaType, Post } from '@/payload-types'
+import type { LegacyMedia, LegacyPost } from '@/types/legacy'
 
 import { Media } from '@/components/Media'
 
-export type CardPostData = Pick<Post, 'slug' | 'categories' | 'meta' | 'title'>
+export type CardPostData = Pick<LegacyPost, 'slug' | 'categories' | 'meta' | 'title'>
 
 export const Card: React.FC<{
   alignItems?: 'center'
@@ -28,8 +28,8 @@ export const Card: React.FC<{
   
   const { description, image: metaImage } = meta || {}
   const titleToDisplay = title
-  const imageToUse: MediaType | string | number | null | undefined =
-    metaImage as MediaType | string | number | null | undefined
+  const imageToUse: LegacyMedia | string | number | null | undefined =
+    metaImage as LegacyMedia | string | number | null | undefined
 
   const hasCategories = categories && Array.isArray(categories) && categories.length > 0
   const titleToUse = titleFromProps || titleToDisplay
@@ -47,7 +47,7 @@ export const Card: React.FC<{
       <div className="relative w-full ">
         {!imageToUse && <div className="">No image</div>}
         {imageToUse && typeof imageToUse === 'object' && (
-          <Media resource={imageToUse as MediaType | number} size="33vw" />
+          <Media resource={imageToUse as LegacyMedia | number} size="33vw" />
         )}
       </div>
       <div className="p-4">
@@ -56,8 +56,8 @@ export const Card: React.FC<{
             {showCategories && hasCategories && (
               <div>
                 {categories?.map((category, index) => {
-                  if (typeof category === 'object') {
-                    const { title: titleFromCategory } = category
+                  if (typeof category === 'object' && category !== null) {
+                    const { title: titleFromCategory } = category as { title?: string }
 
                     const categoryTitle = titleFromCategory || 'Untitled category'
 

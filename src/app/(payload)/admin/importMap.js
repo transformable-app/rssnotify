@@ -6,7 +6,7 @@ import { RssIcon as RssIcon_1cb49e90c431a3a0ce88f18251ca15ac } from '@/component
 import { RssLogo as RssLogo_1cb49e90c431a3a0ce88f18251ca15ac } from '@/components/Admin/graphics/RssBrand'
 import { default as default_1a7510af427896d367a49dbf838d2de6 } from '@/components/BeforeDashboard'
 import { default as default_8a7ab0eb7ab5c511aba12e68480bfe5e } from '@/components/BeforeLogin'
-import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
+import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 export const importMap = {
   "@/components/Admin/NotificationsSourceUrlCell#default": default_845369c7144342b949d5848f8388954f,
@@ -17,5 +17,5 @@ export const importMap = {
   "@/components/Admin/graphics/RssBrand#RssLogo": RssLogo_1cb49e90c431a3a0ce88f18251ca15ac,
   "@/components/BeforeDashboard#default": default_1a7510af427896d367a49dbf838d2de6,
   "@/components/BeforeLogin#default": default_8a7ab0eb7ab5c511aba12e68480bfe5e,
-  "@payloadcms/ui/rsc#CollectionCards": CollectionCards_ab83ff7e88da8d3530831f296ec4756a
+  "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

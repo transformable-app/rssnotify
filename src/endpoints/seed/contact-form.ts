@@ -1,6 +1,6 @@
-import { RequiredDataFromCollectionSlug } from 'payload'
+import type { LegacyForm } from '@/types/legacy'
 
-export const contactForm: RequiredDataFromCollectionSlug<'forms'> = {
+export const contactForm: LegacyForm = {
   confirmationMessage: {
     root: {
       type: 'root',

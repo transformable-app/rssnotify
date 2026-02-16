@@ -15,7 +15,8 @@ export const Header: GlobalConfig = {
     {
       name: 'logo',
       type: 'upload',
-      relationTo: 'media',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- template media collection not in config
+      relationTo: 'media' as any,
       admin: {
         description: 'Logo displayed in the header. If not set, the default Payload logo will be used.',
       },
@@ -23,7 +24,8 @@ export const Header: GlobalConfig = {
     {
       name: 'favicon',
       type: 'upload',
-      relationTo: 'media',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- template media collection not in config
+      relationTo: 'media' as any,
       admin: {
         description: 'Favicon (.ico file). If not set, the default favicon.ico will be used.',
       },
@@ -31,7 +33,8 @@ export const Header: GlobalConfig = {
     {
       name: 'appleTouchIcon',
       type: 'upload',
-      relationTo: 'media',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- template media collection not in config
+      relationTo: 'media' as any,
       admin: {
         description: 'Apple touch icon (typically 180x180 PNG). If not set, no apple touch icon will be used.',
       },

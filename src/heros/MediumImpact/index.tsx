@@ -1,12 +1,11 @@
 import React from 'react'
 
-import type { Page } from '@/payload-types'
-
 import { CMSLink } from '@/components/Link'
 import { Media } from '@/components/Media'
 import RichText from '@/components/RichText'
 
-export const MediumImpactHero: React.FC<Page['hero']> = ({ links, media, richText }) => {
+type HeroProps = { links?: unknown[]; media?: unknown; richText?: unknown }
+export const MediumImpactHero: React.FC<HeroProps> = ({ links, media, richText }) => {
   return (
     <div className="">
       <div className="container mb-8">
@@ -14,7 +13,7 @@ export const MediumImpactHero: React.FC<Page['hero']> = ({ links, media, richTex
 
         {Array.isArray(links) && links.length > 0 && (
           <ul className="flex gap-4">
-            {links.map(({ link }, i) => {
+            {(links as Array<{ link?: unknown }>).map(({ link }, i) => {
               return (
                 <li key={i}>
                   <CMSLink {...(typeof link === 'object' && link !== null ? link : {})} />
@@ -25,7 +24,7 @@ export const MediumImpactHero: React.FC<Page['hero']> = ({ links, media, richTex
         )}
       </div>
       <div className="container ">
-        {media && typeof media === 'object' && (
+        {Boolean(media && typeof media === 'object') && (
           <div>
             <Media
               className="-mx-4 md:-mx-8 2xl:-mx-16"
@@ -33,9 +32,9 @@ export const MediumImpactHero: React.FC<Page['hero']> = ({ links, media, richTex
               priority
               resource={media as never}
             />
-            {media?.caption ? (
+            {(media as { caption?: unknown })?.caption ? (
               <div className="mt-3">
-                <RichText data={media.caption as never} enableGutter={false} />
+                <RichText data={(media as { caption: unknown }).caption as never} enableGutter={false} />
               </div>
             ) : null}
           </div>

@@ -1,30 +1,32 @@
 import type { Metadata } from 'next'
 
-import type { Media, Page, Post, Config } from '../payload-types'
+import type { Config } from '../payload-types'
+import type { LegacyMedia } from '@/types/legacy'
 
 import { mergeOpenGraph } from './mergeOpenGraph'
 import { getServerSideURL } from './getURL'
 
-const getImageURL = (image?: Media | Config['db']['defaultIDType'] | null) => {
+const getImageURL = (image?: LegacyMedia | Config['db']['defaultIDType'] | null) => {
   const serverUrl = getServerSideURL()
 
   let url = serverUrl + '/website-template-OG.webp'
 
   if (image && typeof image === 'object' && 'url' in image) {
-    const ogUrl = image.sizes?.og?.url
+    const img = image as { sizes?: { og?: { url?: string } }; url?: string }
+    const ogUrl = img.sizes?.og?.url
 
-    url = ogUrl ? serverUrl + ogUrl : serverUrl + image.url
+    url = ogUrl ? serverUrl + ogUrl : serverUrl + (img.url ?? '')
   }
 
   return url
 }
 
 export const generateMeta = async (args: {
-  doc: Partial<Page> | Partial<Post> | null
+  doc: { meta?: { image?: unknown; title?: string; description?: string }; slug?: string | string[] } | null
 }): Promise<Metadata> => {
   const { doc } = args
 
-  const ogImage = getImageURL(doc?.meta?.image)
+  const ogImage = getImageURL(doc?.meta?.image as LegacyMedia | null | undefined)
 
   const title = doc?.meta?.title ? doc?.meta?.title + ' | rssnotify' : 'rssnotify'
 

@@ -1,6 +1,6 @@
-import type { Media } from '@/payload-types'
+import type { LegacyMedia } from '@/types/legacy'
 
-export const image1: Omit<Media, 'createdAt' | 'id' | 'updatedAt'> = {
+export const image1: LegacyMedia = {
   alt: 'Curving abstract shapes with an orange and blue gradient',
   caption: {
     root: {

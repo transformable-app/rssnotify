@@ -106,7 +106,8 @@ export const Footer: GlobalConfig = {
     {
       name: 'logo',
       type: 'upload',
-      relationTo: 'media',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- template media collection not in config
+      relationTo: 'media' as any,
       admin: {
         description: 'Logo displayed in the footer. If not set, the default Payload logo will be used.',
       },

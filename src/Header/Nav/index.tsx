@@ -2,11 +2,11 @@
 
 import React from 'react'
 
-import type { Header as HeaderType } from '@/payload-types'
+import type { LegacyHeader } from '@/types/legacy'
 
 import { CMSLink } from '@/components/Link'
 
-export const HeaderNav: React.FC<{ data: HeaderType }> = ({ data }) => {
+export const HeaderNav: React.FC<{ data: LegacyHeader }> = ({ data }) => {
   const navItems = data?.navItems || []
 
   // Debug: log to see what we're getting
@@ -27,7 +27,7 @@ export const HeaderNav: React.FC<{ data: HeaderType }> = ({ data }) => {
         const linkComponent = (
           <CMSLink
             key={i}
-            {...link}
+            {...(link as React.ComponentProps<typeof CMSLink>)}
             appearance="link"
             className="uppercase text-[#fff5d0] text-lg font-semibold tracking-wide hover:text-[#fff5d0]"
           />

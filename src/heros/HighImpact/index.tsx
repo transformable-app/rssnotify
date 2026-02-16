@@ -2,13 +2,12 @@
 import { useHeaderTheme } from '@/providers/HeaderTheme'
 import React, { useEffect } from 'react'
 
-import type { Page } from '@/payload-types'
-
 import { CMSLink } from '@/components/Link'
 import { Media } from '@/components/Media'
 import RichText from '@/components/RichText'
 
-export const HighImpactHero: React.FC<Page['hero']> = ({ links, logo, media, richText }) => {
+type HeroProps = { links?: unknown[]; logo?: unknown; media?: unknown; richText?: unknown }
+export const HighImpactHero: React.FC<HeroProps> = ({ links, logo, media, richText }) => {
   const { setHeaderTheme } = useHeaderTheme()
 
   useEffect(() => {
@@ -25,7 +24,7 @@ export const HighImpactHero: React.FC<Page['hero']> = ({ links, logo, media, ric
           {richText ? <RichText className="mb-6" data={richText as never} enableGutter={false} /> : null}
           {Array.isArray(links) && links.length > 0 && (
             <ul className="flex flex-wrap gap-4">
-              {links.map(({ link }, i) => {
+              {(links as Array<{ link?: unknown }>).map(({ link }, i) => {
                 return (
                   <li key={i}>
                     <CMSLink {...(typeof link === 'object' && link !== null ? link : {})} />
@@ -35,7 +34,7 @@ export const HighImpactHero: React.FC<Page['hero']> = ({ links, logo, media, ric
             </ul>
           )}
         </div>
-        {logo && typeof logo === 'object' && (
+        {Boolean(logo && typeof logo === 'object') && (
           <div className="flex-shrink-0 flex items-center justify-end">
             <Media
               resource={logo as never}
@@ -46,7 +45,7 @@ export const HighImpactHero: React.FC<Page['hero']> = ({ links, logo, media, ric
         )}
       </div>
       <div className="min-h-[80vh] select-none">
-        {media && typeof media === 'object' && (
+        {Boolean(media && typeof media === 'object') && (
           <Media fill imgClassName="-z-10 object-cover" priority resource={media as never} />
         )}
       </div>

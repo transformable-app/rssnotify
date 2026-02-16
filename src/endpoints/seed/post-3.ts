@@ -1,7 +1,7 @@
-import { RequiredDataFromCollectionSlug } from 'payload'
+import type { LegacyPost } from '@/types/legacy'
 import type { PostArgs } from './post-1'
 
-export const post3: (args: PostArgs) => RequiredDataFromCollectionSlug<'posts'> = ({
+export const post3: (args: PostArgs) => LegacyPost = ({
   heroImage,
   blockImage,
   author,

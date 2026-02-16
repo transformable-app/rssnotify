@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import { SearchIcon } from 'lucide-react'
 
-import type { Header } from '@/payload-types'
+import type { LegacyHeader } from '@/types/legacy'
 
 import { Logo } from '@/components/Logo/Logo'
 import { Media } from '@/components/Media'
@@ -13,7 +13,7 @@ import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
 import { HeaderNav } from './Nav'
 
 interface HeaderClientProps {
-  data: Header
+  data: LegacyHeader
 }
 
 export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
@@ -42,7 +42,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
           <Link href="/" className="flex justify-center md:justify-start">
             {data?.logo && typeof data.logo === 'object' ? (
               <Media
-                resource={data.logo}
+                resource={data.logo as React.ComponentProps<typeof Media>['resource']}
                 imgClassName="max-w-[9.375rem] w-full h-[34px]"
                 priority
                 loading="eager"
