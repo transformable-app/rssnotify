@@ -1702,25 +1702,6 @@ export interface FeedAutomation {
      */
     model?: string | null;
     modelPrompt?: string | null;
-    createPost?: boolean | null;
-    /**
-     * Model name to use for post generation (e.g., gpt-4o-mini).
-     */
-    postModel?: string | null;
-    /**
-     * Prompt used to generate the post. This is separate from the matching prompt.
-     */
-    postPrompt?: string | null;
-    generateImage?: boolean | null;
-    /**
-     * Image model name to use (e.g., gpt-image-1).
-     */
-    imageModel?: string | null;
-    imageSize?: ('1024x1024' | '1024x1536' | '1536x1024') | null;
-    /**
-     * Prompt used to generate the hero image.
-     */
-    imagePrompt?: string | null;
     fetchLinkContent?: boolean | null;
   };
   redditRules?: {
@@ -2889,13 +2870,6 @@ export interface FeedAutomationsSelect<T extends boolean = true> {
     | {
         model?: T;
         modelPrompt?: T;
-        createPost?: T;
-        postModel?: T;
-        postPrompt?: T;
-        generateImage?: T;
-        imageModel?: T;
-        imageSize?: T;
-        imagePrompt?: T;
         fetchLinkContent?: T;
       };
   redditRules?:
