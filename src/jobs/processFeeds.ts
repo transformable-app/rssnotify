@@ -310,6 +310,7 @@ export const processFeedsTask: TaskConfig = {
           const rules = getAutomationRules(automation) as Record<string, unknown> | null
 
           const fetchLinkContent = Boolean(rules?.fetchLinkContent)
+          const notifyEveryPost = Boolean(rules?.notifyEveryPost)
           const itemsToProcess =
             automation.type === 'rss'
               ? [item as FeedItemWithFlags]
@@ -322,7 +323,7 @@ export const processFeedsTask: TaskConfig = {
           const useBatchCommentModel = automation.type === 'reddit' && commentItems.length > 0
           let commentModelDecision: boolean | null = null
 
-          if (useBatchCommentModel) {
+          if (useBatchCommentModel && !notifyEveryPost) {
             const batchContent = buildCommentBatchModelContent({
               parentItem: parentItemForComments,
               commentItems,
@@ -412,13 +413,15 @@ export const processFeedsTask: TaskConfig = {
               }
             }
 
-            const modelOk = commentModelDecision ?? (await runModelCheck({
-              content: modelContent,
-              model: typeof rules?.model === 'string' ? rules.model : undefined,
-              prompt: typeof rules?.modelPrompt === 'string' ? rules.modelPrompt : undefined,
-            }))
+            const modelOk = notifyEveryPost
+              ? true
+              : commentModelDecision ?? (await runModelCheck({
+                  content: modelContent,
+                  model: typeof rules?.model === 'string' ? rules.model : undefined,
+                  prompt: typeof rules?.modelPrompt === 'string' ? rules.modelPrompt : undefined,
+                }))
 
-            if (commentModelDecision === null) {
+            if (!notifyEveryPost && commentModelDecision === null) {
               logDebug(
                 debugKey,
                 `process-feeds debug: model decision for "${targetItem.title || 'untitled'}" => ${modelOk}`,

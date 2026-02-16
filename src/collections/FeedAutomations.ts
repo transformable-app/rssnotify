@@ -52,7 +52,7 @@ export const FeedAutomations: CollectionConfig<'feed-automations'> = {
     },
     {
       name: 'standardRules',
-      label: 'Standard RSS Rules',
+      label: 'RSS Rules',
       type: 'group',
       fields: [
         {
@@ -67,6 +67,12 @@ export const FeedAutomations: CollectionConfig<'feed-automations'> = {
           name: 'modelPrompt',
           label: 'Model prompt',
           type: 'textarea',
+        },
+        {
+          name: 'notifyEveryPost',
+          label: 'Notify me of every post, no evaluation',
+          type: 'checkbox',
+          defaultValue: false,
         },
         {
           name: 'fetchLinkContent',

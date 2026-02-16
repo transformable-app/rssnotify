@@ -170,6 +170,7 @@ export interface FeedAutomation {
      */
     model?: string | null;
     modelPrompt?: string | null;
+    notifyEveryPost?: boolean | null;
     fetchLinkContent?: boolean | null;
   };
   redditRules?: {
@@ -460,6 +461,7 @@ export interface FeedAutomationsSelect<T extends boolean = true> {
     | {
         model?: T;
         modelPrompt?: T;
+        notifyEveryPost?: T;
         fetchLinkContent?: T;
       };
   redditRules?:
