@@ -39,6 +39,8 @@ import { FolderTypeField as FolderTypeField_3817bf644402e67bfe6577f60ef982de } f
 import { RowLabel as RowLabel_ec255a65fa6fa8d1faeb09cf35284224 } from '@/Header/RowLabel'
 import { RowLabel as RowLabel_1f6ff6ff633e3695d348f4f3c58f1466 } from '@/Footer/RowLabel'
 import { default as default_e6080cf2a6380ab220552afd73667312 } from '@/components/Admin/JobsScheduleView'
+import { RssIcon as RssIcon_1cb49e90c431a3a0ce88f18251ca15ac } from '@/components/Admin/graphics/RssBrand'
+import { RssLogo as RssLogo_1cb49e90c431a3a0ce88f18251ca15ac } from '@/components/Admin/graphics/RssBrand'
 import { default as default_1a7510af427896d367a49dbf838d2de6 } from '@/components/BeforeDashboard'
 import { default as default_8a7ab0eb7ab5c511aba12e68480bfe5e } from '@/components/BeforeLogin'
 import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
@@ -85,6 +87,8 @@ export const importMap = {
   "@/Header/RowLabel#RowLabel": RowLabel_ec255a65fa6fa8d1faeb09cf35284224,
   "@/Footer/RowLabel#RowLabel": RowLabel_1f6ff6ff633e3695d348f4f3c58f1466,
   "@/components/Admin/JobsScheduleView#default": default_e6080cf2a6380ab220552afd73667312,
+  "@/components/Admin/graphics/RssBrand#RssIcon": RssIcon_1cb49e90c431a3a0ce88f18251ca15ac,
+  "@/components/Admin/graphics/RssBrand#RssLogo": RssLogo_1cb49e90c431a3a0ce88f18251ca15ac,
   "@/components/BeforeDashboard#default": default_1a7510af427896d367a49dbf838d2de6,
   "@/components/BeforeLogin#default": default_8a7ab0eb7ab5c511aba12e68480bfe5e,
   "@payloadcms/ui/rsc#CollectionCards": CollectionCards_ab83ff7e88da8d3530831f296ec4756a

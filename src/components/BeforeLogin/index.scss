@@ -1,0 +1,36 @@
+.before-login {
+  margin-bottom: 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.before-login p {
+  margin: 0;
+}
+
+.before-login__brand {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(90deg, #1a1a1a 0%, #b3b3b3 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.before-login__icon {
+  color: #2b2b2b;
+  display: inline-flex;
+}
+
+html[data-theme='dark'] .before-login__icon {
+  color: #f8fafc;
+}
