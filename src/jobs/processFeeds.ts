@@ -235,7 +235,7 @@ export const processFeedsTask: TaskConfig = {
   label: 'Process RSS feeds',
   schedule: [
     {
-      cron: '* * * * * *',
+      cron: '0 0 * * * *',
       queue: 'feeds',
     },
   ],
