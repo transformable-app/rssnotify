@@ -1,7 +1,7 @@
 import type { PayloadRequest, TaskConfig, Where } from 'payload'
 import type { FeedAutomation, Notification, RssFeed } from '@/payload-types'
 
-import { fetchFeedItems, fetchLinkText } from './rss'
+import { fetchFeedItems } from './rss'
 
 const MAX_ITEMS_PER_FEED = 25
 const MAX_MODEL_RAW_CHARS = 2000
@@ -309,7 +309,6 @@ export const processFeedsTask: TaskConfig = {
           const debugKey = `${feed.id}:${automation.id}`
           const rules = getAutomationRules(automation) as Record<string, unknown> | null
 
-          const fetchLinkContent = Boolean(rules?.fetchLinkContent)
           const notifyEveryPost = Boolean(rules?.notifyEveryPost)
           const itemsToProcess =
             automation.type === 'rss'
@@ -401,17 +400,6 @@ export const processFeedsTask: TaskConfig = {
             }
 
             if (alreadyNotified) continue
-
-            const linkForContent = automation.type === 'reddit'
-              ? targetItem.externalLink || targetItem.link
-              : targetItem.link
-
-            if (fetchLinkContent && linkForContent) {
-              const linkContent = await fetchLinkText(linkForContent)
-              if (linkContent) {
-                content = `${content}\n\n${linkContent}`
-              }
-            }
 
             const modelOk = notifyEveryPost
               ? true

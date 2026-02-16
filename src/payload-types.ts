@@ -171,17 +171,14 @@ export interface FeedAutomation {
     model?: string | null;
     modelPrompt?: string | null;
     notifyEveryPost?: boolean | null;
-    fetchLinkContent?: boolean | null;
   };
   redditRules?: {
     followPostRss?: boolean | null;
     processComments?: boolean | null;
-    fetchLinkContent?: boolean | null;
   };
   wordpressRules?: {
     followPostRss?: boolean | null;
     processComments?: boolean | null;
-    fetchLinkContent?: boolean | null;
   };
   updatedAt: string;
   createdAt: string;
@@ -462,21 +459,18 @@ export interface FeedAutomationsSelect<T extends boolean = true> {
         model?: T;
         modelPrompt?: T;
         notifyEveryPost?: T;
-        fetchLinkContent?: T;
       };
   redditRules?:
     | T
     | {
         followPostRss?: T;
         processComments?: T;
-        fetchLinkContent?: T;
       };
   wordpressRules?:
     | T
     | {
         followPostRss?: T;
         processComments?: T;
-        fetchLinkContent?: T;
       };
   updatedAt?: T;
   createdAt?: T;

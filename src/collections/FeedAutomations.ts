@@ -74,12 +74,6 @@ export const FeedAutomations: CollectionConfig<'feed-automations'> = {
           type: 'checkbox',
           defaultValue: false,
         },
-        {
-          name: 'fetchLinkContent',
-          label: 'Fetch link content when available',
-          type: 'checkbox',
-          defaultValue: false,
-        },
       ],
     },
     {
@@ -102,12 +96,6 @@ export const FeedAutomations: CollectionConfig<'feed-automations'> = {
           type: 'checkbox',
           defaultValue: true,
         },
-        {
-          name: 'fetchLinkContent',
-          label: 'Fetch link content when available',
-          type: 'checkbox',
-          defaultValue: false,
-        },
       ],
     },
     {
@@ -127,12 +115,6 @@ export const FeedAutomations: CollectionConfig<'feed-automations'> = {
         {
           name: 'processComments',
           label: 'Process each comment',
-          type: 'checkbox',
-          defaultValue: false,
-        },
-        {
-          name: 'fetchLinkContent',
-          label: 'Fetch link content when available',
           type: 'checkbox',
           defaultValue: false,
         },
