@@ -21,6 +21,14 @@ const dirname = path.dirname(filename)
 
 export default buildConfig({
   admin: {
+    meta: {
+      icons: {
+        icon: [
+          { url: '/favicon.ico', sizes: '32x32' },
+          { url: '/favicon.svg', type: 'image/svg+xml' },
+        ],
+      },
+    },
     components: {
       graphics: {
         Logo: '@/components/Admin/graphics/RssBrand#RssLogo',
