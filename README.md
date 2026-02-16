@@ -2,7 +2,7 @@
 
 RSS feed monitor that evaluates feed items (optionally with OpenAI), creates notifications when content matches your rules, and delivers them via email and/or [ntfy](https://ntfy.sh).
 
-Built with [Payload CMS](https://payloadcms.com), MongoDB, and Next.js.
+Built with [Payload CMS](https://payloadcms.com)
 
 ## Features
 
@@ -14,20 +14,17 @@ Built with [Payload CMS](https://payloadcms.com), MongoDB, and Next.js.
 
 ## Quick Start
 
-1. Clone the repo and install dependencies:
+1. Clone the repo and create a `.env` in the project root. Set at least:
+   - `PAYLOAD_SECRET` – secret for Payload (required)
+   - `NEXT_PUBLIC_SERVER_URL` – public URL of the app (e.g. `http://localhost:3000`)
+   - `CRON_SECRET` – secret for cron/job endpoints (required)
+   - `PREVIEW_SECRET` – secret for preview (required)
+   Optionally: `OPENAI_API_KEY` (and `OPENAI_BASE_URL`, `MODEL_NAME`) for AI filtering. MongoDB credentials default in Compose; override with `MONGO_INITDB_ROOT_USERNAME`, `MONGO_INITDB_ROOT_PASSWORD`, `MONGO_INITDB_DATABASE` if needed.
+2. Start the stack with Docker Compose using this project’s [docker-compose.yml](docker-compose.yml):
    ```bash
-   cd rssnotify && pnpm install
+   docker-compose up
    ```
-2. Copy env and set required variables:
-   ```bash
-   cp .env.example .env
-   ```
-   Set at least: `DATABASE_URL`, `PAYLOAD_SECRET`, `NEXT_PUBLIC_SERVER_URL`. For AI filtering: `OPENAI_API_KEY` (and optionally `OPENAI_BASE_URL`, `MODEL_NAME`).
-3. Run the app:
-   ```bash
-   pnpm dev
-   ```
-4. Open `http://localhost:3000/admin`, create an admin user, then add **RSS Feeds** and **Feed Automations**.
+3. Open `http://localhost:3000/admin`, create an admin user, then add **RSS Feeds** and **Feed Automations**.
 
 ## Collections
 

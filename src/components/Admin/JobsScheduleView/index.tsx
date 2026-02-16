@@ -13,7 +13,7 @@ const JobsScheduleView: React.FC = () => {
           <div className="payload__flex__content">
             <h1>Jobs</h1>
             <p className="description">
-              These are the background tasks configured in Payload and their schedules.
+              These are the background tasks configured in rssnotify and their schedules.
             </p>
             <JobsResetButton />
 
