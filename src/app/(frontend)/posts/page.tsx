@@ -99,7 +99,6 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    title: `Payload Website Template Posts`,
+    title: `rssnotify Posts`,
   }
 }
-

@@ -22,6 +22,7 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     meta: {
+      titleSuffix: ' - rssnotify',
       icons: {
         icon: [
           { url: '/favicon.ico', sizes: '32x32' },
