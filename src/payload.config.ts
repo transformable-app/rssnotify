@@ -5,17 +5,10 @@ import { en } from 'payload/i18n/en'
 import { APIError, buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
 
-import { Categories } from './collections/Categories'
-import { Media } from './collections/Media'
-import { Pages } from './collections/Pages'
-import { Posts } from './collections/Posts'
 import { FeedAutomations } from './collections/FeedAutomations'
 import { Notifications } from './collections/Notifications'
 import { RssFeeds } from './collections/RssFeeds'
 import { Users } from './collections/Users'
-import { Footer } from './Footer/config'
-import { Header } from './Header/config'
-import { IndexPages } from './IndexPages/config'
 import { JobsGlobal } from './JobsGlobal/config'
 import { Settings } from './Settings/config'
 import { plugins } from './plugins'
@@ -72,7 +65,7 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
   }),
-  collections: [Pages, Posts, Media, Categories, RssFeeds, FeedAutomations, Notifications, Users],
+  collections: [RssFeeds, FeedAutomations, Notifications, Users],
   cors: [
     getServerSideURL(),
     'https://payloadcms.3twenty9.com',
@@ -91,7 +84,7 @@ export default buildConfig({
       },
     },
   },
-  globals: [Header, Footer, IndexPages, Settings, JobsGlobal],
+  globals: [Settings, JobsGlobal],
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,
