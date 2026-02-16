@@ -18,6 +18,8 @@ import { tasks } from './jobs'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+const jobsAutoRunEnabled = process.env.PAYLOAD_JOBS_AUTORUN === 'true'
+const jobsAutoRunCron = process.env.PAYLOAD_JOBS_AUTORUN_CRON || '* * * * *'
 
 export default buildConfig({
   admin: {
@@ -142,6 +144,14 @@ export default buildConfig({
         return authHeader === `Bearer ${process.env.CRON_SECRET}`
       },
     },
+    autoRun: jobsAutoRunEnabled
+      ? [
+          {
+            allQueues: true,
+            cron: jobsAutoRunCron,
+          },
+        ]
+      : undefined,
     tasks,
   },
 })

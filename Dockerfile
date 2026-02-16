@@ -42,6 +42,8 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
+ENV PAYLOAD_JOBS_AUTORUN=true
+ENV PAYLOAD_JOBS_AUTORUN_CRON="* * * * *"
 # Uncomment the following line in case you want to disable telemetry during runtime.
 # ENV NEXT_TELEMETRY_DISABLED 1
 

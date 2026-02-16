@@ -222,6 +222,35 @@ Alternatively, you can use [Docker](https://www.docker.com) to spin up this temp
 
 That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
 
+### Docker deployment (GHCR)
+
+This repo includes a production Docker workflow that publishes images to GitHub Container Registry:
+
+- `ghcr.io/transformable-app/rssnotify`
+
+On every push to `main` (and on `v*` tags), GitHub Actions builds and pushes the image.
+
+#### Running the published image
+
+```bash
+docker run --rm -p 3000:3000 \
+  -e DATABASE_URL='mongodb://<host>/rssnotify' \
+  -e PAYLOAD_SECRET='<secret>' \
+  -e NEXT_PUBLIC_SERVER_URL='https://your-domain.example' \
+  ghcr.io/transformable-app/rssnotify:latest
+```
+
+#### Cron jobs in Docker
+
+Payload job schedules are enabled in Docker through `jobs.autoRun` and run every minute by default. The image sets:
+
+- `PAYLOAD_JOBS_AUTORUN=true`
+- `PAYLOAD_JOBS_AUTORUN_CRON=* * * * *`
+
+You can override the cron interval at runtime with `PAYLOAD_JOBS_AUTORUN_CRON`.
+
+For multi-replica deployments, enable autorun on one instance to avoid duplicate schedule processing.
+
 ### Seed
 
 To seed the database with a few pages, posts, and projects you can click the 'seed database' link from the admin panel.

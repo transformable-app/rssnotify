@@ -1,0 +1,15 @@
+.git
+.github
+.next
+node_modules
+.pnpm-store
+.vscode
+.cursor
+coverage
+playwright-report
+test-results
+dump
+*.log
+.env
+.env.*
+!.env.example

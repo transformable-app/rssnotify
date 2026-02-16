@@ -5,6 +5,9 @@ declare global {
       DATABASE_URL: string
       NEXT_PUBLIC_SERVER_URL: string
       VERCEL_PROJECT_PRODUCTION_URL: string
+      CRON_SECRET?: string
+      PAYLOAD_JOBS_AUTORUN?: 'true' | 'false'
+      PAYLOAD_JOBS_AUTORUN_CRON?: string
     }
   }
 }
