@@ -1,332 +1,165 @@
-# Payload Website Template
+# rssnotify
 
-This is the official [Payload Website Template](https://github.com/payloadcms/payload/blob/main/templates/website). Use it to power websites, blogs, or portfolios from small to enterprise. This repo includes a fully-working backend, enterprise-grade admin panel, and a beautifully designed, production-ready website.
+RSS feed monitor that evaluates feed items (optionally with OpenAI), creates notifications when content matches your rules, and delivers them via email and/or [ntfy](https://ntfy.sh).
 
-This template is right for you if you are working on:
+Built with [Payload CMS](https://payloadcms.com), MongoDB, and Next.js.
 
-- A personal or enterprise-grade website, blog, or portfolio
-- A content publishing platform with a fully featured publication workflow
-- Exploring the capabilities of Payload
+## Features
 
-Core features:
-
-- [Pre-configured Payload Config](#how-it-works)
-- [Authentication](#users-authentication)
-- [Access Control](#access-control)
-- [Layout Builder](#layout-builder)
-- [Draft Preview](#draft-preview)
-- [Live Preview](#live-preview)
-- [On-demand Revalidation](#on-demand-revalidation)
-- [SEO](#seo)
-- [Search](#search)
-- [Redirects](#redirects)
-- [Jobs and Scheduled Publishing](#jobs-and-scheduled-publish)
-- [Website](#website)
+- **RSS Feeds** – Add Standard RSS, Reddit, or WordPress feed URLs; enable/disable per feed.
+- **Feed Automations** – Define rules per automation: optional OpenAI-based filtering, “notify every post,” and type-specific options (e.g. follow post RSS, process comments for Reddit/WordPress).
+- **Notifications** – View and manage generated alerts; delivery status (email / ntfy) and bulk actions in the admin.
+- **Scheduled jobs** – Process feeds and deliver notifications on a cron schedule (e.g. every minute for feeds, every minute for delivery).
+- **Notification delivery** – Email (SMTP) and/or ntfy; configurable in Settings.
 
 ## Quick Start
 
-To spin up this example locally, follow these steps:
+1. Clone the repo and install dependencies:
+   ```bash
+   cd rssnotify && pnpm install
+   ```
+2. Copy env and set required variables:
+   ```bash
+   cp .env.example .env
+   ```
+   Set at least: `DATABASE_URL`, `PAYLOAD_SECRET`, `NEXT_PUBLIC_SERVER_URL`. For AI filtering: `OPENAI_API_KEY` (and optionally `OPENAI_BASE_URL`, `MODEL_NAME`).
+3. Run the app:
+   ```bash
+   pnpm dev
+   ```
+4. Open `http://localhost:3000/admin`, create an admin user, then add **RSS Feeds** and **Feed Automations**.
 
-### Clone
+## Collections
 
-If you have not done so already, you need to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+All content is restricted to authenticated users.
 
-Use the `create-payload-app` CLI to clone this template directly to your machine:
+### RSS Feeds
 
-```bash
-pnpx create-payload-app my-project -t website
-```
+Feed sources to poll.
 
-### Development
+- **Name** – Label for the feed.
+- **Type** – `Standard RSS`, `Reddit`, or `WordPress`.
+- **URL** – Feed URL (unique).
+- **Enabled** – Whether the feed is included in processing.
+- **Notes** – Optional notes.
 
-1. First [clone the repo](#clone) if you have not done so already
-1. `cd my-project && cp .env.example .env` to copy the example environment variables
-1. `pnpm install && pnpm dev` to install dependencies and start the dev server
-1. open `http://localhost:3000` to open the app in your browser
+### Feed Automations
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+Rules that run when processing feeds. Each automation can target all feeds or a selected set.
 
-## How it works
+- **Name** – Label for the automation.
+- **Enabled** – Whether the automation runs.
+- **Type** – `Standard RSS`, `Reddit`, or `WordPress / Blog`.
+- **Feeds** – Optional: limit this automation to specific feeds.
+- **RSS Rules** (shared) – OpenAI model and prompt for evaluating content; option to notify on every post without evaluation.
+- **Reddit Rules** (when type = Reddit) – Follow post URL to its `.rss` version; process each comment.
+- **WordPress / Blog RSS Rules** (when type = WordPress) – Same options as Reddit.
 
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+When content matches an automation’s rules, a **Notification** is created. The **process-feeds** job runs on a schedule to fetch feeds and evaluate items.
 
-### Collections
+### Notifications
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
+Generated alerts from feed automations.
 
-- #### Users (Authentication)
+- **Title**, **Message**, **Source URL** – Content and link.
+- **Automation** – Which feed automation created it.
+- **Feed** – Source feed (if known).
+- **Matched At** – When the match occurred.
+- **Overall Status** – `pending`, `sent`, `failed`, `skipped`.
+- **Delivery** – Per-channel status and errors for **email** and **ntfy** (e.g. sent at, error message).
+- **Data** – Raw payload for debugging.
 
-  Users are auth-enabled collections that have access to the admin panel and unpublished content. See [Access Control](#access-control) for more details.
+The **deliver-notifications** job sends pending notifications using **Settings** (email and ntfy configuration).
 
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/main/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
+### Users
 
-- #### Posts
+Admin users (auth collection). Used for login and access control. Managed under **Settings** in the admin.
 
-  Posts are used to generate blog posts, news articles, or any other type of content that is published over time. All posts are layout builder enabled so you can generate unique layouts for each post using layout-building blocks, see [Layout Builder](#layout-builder) for more details. Posts are also draft-enabled so you can preview them before publishing them to your website, see [Draft Preview](#draft-preview) for more details.
+## Globals
 
-- #### Pages
+### Notification Settings (`settings`)
 
-  All pages are layout builder enabled so you can generate unique layouts for each page using layout-building blocks, see [Layout Builder](#layout-builder) for more details. Pages are also draft-enabled so you can preview them before publishing them to your website, see [Draft Preview](#draft-preview) for more details.
+Configure how notifications are delivered.
 
-- #### Media
+- **Email** – Enabled, From Name, From Email, Reply-To, Recipients (list of addresses). Used with SMTP (e.g. Nodemailer); ensure your deployment has SMTP env vars configured if you use email.
+- **Ntfy** – Enabled, Server URL (e.g. `https://ntfy.sh`), Auth Token (optional), Channels (list of topics).
 
-  This is the uploads enabled collection used by pages, posts, and projects to contain media like images, videos, downloads, and other assets. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
+### Jobs (`jobs`)
 
-- #### Categories
-
-  A taxonomy used to group posts together. Categories can be nested inside of one another, for example "News > Technology". See the official [Payload Nested Docs Plugin](https://payloadcms.com/docs/plugins/nested-docs) for more details.
-
-### Globals
-
-See the [Globals](https://payloadcms.com/docs/configuration/globals) docs for details on how to extend this functionality.
-
-- `Header`
-
-  The data required by the header on your front-end like nav links.
-
-- `Footer`
-
-  Same as above but for the footer of your site.
+Global that shows the job schedule and queue status. Used by the **process-feeds** and **deliver-notifications** tasks.
 
 ## Access control
 
-Basic access control is setup to limit access to various content based based on publishing status.
+- **RSS Feeds, Feed Automations, Notifications, Users** – Only authenticated users can create, read, update, and delete.
+- **Settings, Jobs** – Only authenticated users can read and update.
 
-- `users`: Users can access the admin panel and create or edit content.
-- `posts`: Everyone can access published posts, but only users can create, update, or delete them.
-- `pages`: Everyone can access published pages, but only users can create, update, or delete them.
+## Jobs and schedule
 
-For more details on how to extend this functionality, see the [Payload Access Control](https://payloadcms.com/docs/access-control/overview#access-control) docs.
+- **process-feeds** – Fetches RSS/Reddit/WordPress feeds, evaluates items with automations (and optionally OpenAI), creates notifications. Run on a cron schedule (e.g. every minute).
+- **deliver-notifications** – Sends pending notifications via email and/or ntfy using Notification Settings. Run on a cron schedule (e.g. every minute).
 
-## Layout Builder
-
-Create unique page layouts for any type of content using a powerful layout builder. This template comes pre-configured with the following layout building blocks:
-
-- Hero
-- Content
-- Media
-- Call To Action
-- Archive
-
-Each block is fully designed and built into the front-end website that comes with this template. See [Website](#website) for more details.
-
-## Lexical editor
-
-A deep editorial experience that allows complete freedom to focus just on writing content without breaking out of the flow with support for Payload blocks, media, links and other features provided out of the box. See [Lexical](https://payloadcms.com/docs/rich-text/overview) docs.
-
-## Draft Preview
-
-All posts and pages are draft-enabled so you can preview them before publishing them to your website. To do this, these collections use [Versions](https://payloadcms.com/docs/configuration/collections#versions) with `drafts` set to `true`. This means that when you create a new post, project, or page, it will be saved as a draft and will not be visible on your website until you publish it. This also means that you can preview your draft before publishing it to your website. To do this, we automatically format a custom URL which redirects to your front-end to securely fetch the draft version of your content.
-
-Since the front-end of this template is statically generated, this also means that pages, posts, and projects will need to be regenerated as changes are made to published documents. To do this, we use an `afterChange` hook to regenerate the front-end when a document has changed and its `_status` is `published`.
-
-For more details on how to extend this functionality, see the official [Draft Preview Example](https://github.com/payloadcms/payload/tree/examples/draft-preview).
-
-## Live preview
-
-In addition to draft previews you can also enable live preview to view your end resulting page as you're editing content with full support for SSR rendering. See [Live preview docs](https://payloadcms.com/docs/live-preview/overview) for more details.
-
-## On-demand Revalidation
-
-We've added hooks to collections and globals so that all of your pages, posts, footer, or header changes will automatically be updated in the frontend via on-demand revalidation supported by Nextjs.
-
-> Note: if an image has been changed, for example it's been cropped, you will need to republish the page it's used on in order to be able to revalidate the Nextjs image cache.
-
-## SEO
-
-This template comes pre-configured with the official [Payload SEO Plugin](https://payloadcms.com/docs/plugins/seo) for complete SEO control from the admin panel. All SEO data is fully integrated into the front-end website that comes with this template. See [Website](#website) for more details.
-
-## Search
-
-This template also pre-configured with the official [Payload Search Plugin](https://payloadcms.com/docs/plugins/search) to showcase how SSR search features can easily be implemented into Next.js with Payload. See [Website](#website) for more details.
-
-## Redirects
-
-If you are migrating an existing site or moving content to a new URL, you can use the `redirects` collection to create a proper redirect from old URLs to new ones. This will ensure that proper request status codes are returned to search engines and that your users are not left with a broken link. This template comes pre-configured with the official [Payload Redirects Plugin](https://payloadcms.com/docs/plugins/redirects) for complete redirect control from the admin panel. All redirects are fully integrated into the front-end website that comes with this template. See [Website](#website) for more details.
-
-## Jobs and Scheduled Publish
-
-We have configured [Scheduled Publish](https://payloadcms.com/docs/versions/drafts#scheduled-publish) which uses the [jobs queue](https://payloadcms.com/docs/jobs-queue/jobs) in order to publish or unpublish your content on a scheduled time. The tasks are run on a cron schedule and can also be run as a separate instance if needed.
-
-> Note: When deployed on Vercel, depending on the plan tier, you may be limited to daily cron only.
-
-## Website
-
-This template includes a beautifully designed, production-ready front-end built with the [Next.js App Router](https://nextjs.org), served right alongside your Payload app in a instance. This makes it so that you can deploy both your backend and website where you need it.
-
-Core features:
-
-- [Next.js App Router](https://nextjs.org)
-- [TypeScript](https://www.typescriptlang.org)
-- [React Hook Form](https://react-hook-form.com)
-- [Payload Admin Bar](https://github.com/payloadcms/payload/tree/main/packages/admin-bar)
-- [TailwindCSS styling](https://tailwindcss.com/)
-- [shadcn/ui components](https://ui.shadcn.com/)
-- User Accounts and Authentication
-- Fully featured blog
-- Publication workflow
-- Dark mode
-- Pre-made layout building blocks
-- SEO
-- Search
-- Redirects
-- Live preview
-
-### Cache
-
-Although Next.js includes a robust set of caching strategies out of the box, Payload Cloud proxies and caches all files through Cloudflare using the [Official Cloud Plugin](https://www.npmjs.com/package/@payloadcms/payload-cloud). This means that Next.js caching is not needed and is disabled by default. If you are hosting your app outside of Payload Cloud, you can easily reenable the Next.js caching mechanisms by removing the `no-store` directive from all fetch requests in `./src/app/_api` and then removing all instances of `export const dynamic = 'force-dynamic'` from pages files, such as `./src/app/(pages)/[slug]/page.tsx`. For more details, see the official [Next.js Caching Docs](https://nextjs.org/docs/app/building-your-application/caching).
+Job execution is allowed for logged-in users or when the request includes the correct `CRON_SECRET` (e.g. for external cron or Vercel Cron).
 
 ## Development
 
-To spin up this example locally, follow the [Quick Start](#quick-start). Then [Seed](#seed) the database with a few pages, posts, and projects.
+- `pnpm dev` – Start Next.js dev server (Payload admin at `/admin`).
+- `pnpm build` – Production build.
+- `pnpm start` – Run production server.
+- `pnpm generate:types` – Regenerate Payload types after schema changes.
+- `pnpm generate:importmap` – Regenerate import map after adding/changing admin components.
 
-### Working with Postgres
+Use a local MongoDB instance or Docker for `DATABASE_URL`. Optional: set `OPENAI_API_KEY` (and related env) to test AI-based filtering.
 
-Postgres and other SQL-based databases follow a strict schema for managing your data. In comparison to our MongoDB adapter, this means that there's a few extra steps to working with Postgres.
+## Docker
 
-Note that often times when making big schema changes you can run the risk of losing data if you're not manually migrating it.
+### Run with Docker Compose
 
-#### Local development
+The repo includes a production Compose setup that runs the app and MongoDB:
 
-Ideally we recommend running a local copy of your database so that schema updates are as fast as possible. By default the Postgres adapter has `push: true` for development environments. This will let you add, modify and remove fields and collections without needing to run any data migrations.
+1. Set required env (e.g. in `.env`): `PAYLOAD_SECRET`, `NEXT_PUBLIC_SERVER_URL`, `CRON_SECRET`, `PREVIEW_SECRET`. Optionally: `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `MODEL_NAME`, MongoDB credentials, `RSS_FETCH_JITTER_*`.
+2. Run:
+   ```bash
+   docker-compose up
+   ```
+3. Open `http://localhost:3000/admin` and create your first user.
 
-If your database is pointed to production you will want to set `push: false` otherwise you will risk losing data or having your migrations out of sync.
-
-#### Migrations
-
-[Migrations](https://payloadcms.com/docs/database/migrations) are essentially SQL code versions that keeps track of your schema. When deploy with Postgres you will need to make sure you create and then run your migrations.
-
-Locally create a migration
-
-```bash
-pnpm payload migrate:create
-```
-
-This creates the migration files you will need to push alongside with your new configuration.
-
-On the server after building and before running `pnpm start` you will want to run your migrations
-
-```bash
-pnpm payload migrate
-```
-
-This command will check for any migrations that have not yet been run and try to run them and it will keep a record of migrations that have been run in the database.
-
-### Docker
-
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
-
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
-
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
+The app image is built from the project Dockerfile; Compose uses `ghcr.io/transformable-app/rssnotify:latest` by default (override with `RSSNOTIFY_IMAGE`).
 
 ### Docker deployment (GHCR)
 
-This repo includes a production Docker workflow that publishes images to GitHub Container Registry:
+Images are published to GitHub Container Registry:
 
 - `ghcr.io/transformable-app/rssnotify`
 
-On every push to `main` (and on `v*` tags), GitHub Actions builds and pushes the image.
+On push to `main` (and on `v*` tags), GitHub Actions builds and pushes the image.
 
-#### Running the published image
+#### Run the published image
 
 ```bash
 docker run --rm -p 3000:3000 \
   -e DATABASE_URL='mongodb://<host>/rssnotify' \
   -e PAYLOAD_SECRET='<secret>' \
   -e NEXT_PUBLIC_SERVER_URL='https://your-domain.example' \
+  -e CRON_SECRET='<cron-secret>' \
+  -e PREVIEW_SECRET='<preview-secret>' \
   ghcr.io/transformable-app/rssnotify:latest
 ```
 
 #### Cron jobs in Docker
 
-Payload job schedules are enabled in Docker through `jobs.autoRun` and run every minute by default. The image sets:
+Payload job schedules are driven by `jobs.autoRun` and run every minute by default. The image uses:
 
 - `PAYLOAD_JOBS_AUTORUN=true`
 - `PAYLOAD_JOBS_AUTORUN_CRON=* * * * *`
 
-You can override the cron interval at runtime with `PAYLOAD_JOBS_AUTORUN_CRON`.
-
-For multi-replica deployments, enable autorun on one instance to avoid duplicate schedule processing.
-
-### Seed
-
-To seed the database with a few pages, posts, and projects you can click the 'seed database' link from the admin panel.
-
-The seed script will also create a demo user for demonstration purposes only:
-
-- Demo Author
-  - Email: `demo-author@payloadcms.com`
-  - Password: `password`
-
-> NOTICE: seeding the database is destructive because it drops your current database to populate a fresh one from the seed template. Only run this command if you are starting a new project or can afford to lose your current data.
+Override the schedule with `PAYLOAD_JOBS_AUTORUN_CRON` at runtime. For multiple replicas, enable autoRun on a single instance to avoid duplicate processing.
 
 ## Production
 
-To run Payload in production, you need to build and start the Admin panel. To do so, follow these steps:
+1. Set `DATABASE_URL`, `PAYLOAD_SECRET`, `NEXT_PUBLIC_SERVER_URL`, and any cron/delivery/env required by your deployment.
+2. Build and start: `pnpm build && pnpm start` (or use the Docker image).
+3. For cron, either rely on in-process `PAYLOAD_JOBS_AUTORUN` or call the jobs endpoint on a schedule with `CRON_SECRET` in the `Authorization: Bearer <CRON_SECRET>` header.
 
-1. Invoke the `next build` script by running `pnpm build` or `npm run build` in your project root. This creates a `.next` directory with a production-ready admin bundle.
-1. Finally run `pnpm start` or `npm run start` to run Node in production and serve Payload from the `.build` directory.
-1. When you're ready to go live, see Deployment below for more details.
+## Platform Questions
 
-### Deploying to Vercel
-
-This template can also be deployed to Vercel for free. You can get started by choosing the Vercel DB adapter during the setup of the template or by manually installing and configuring it:
-
-```bash
-pnpm add @payloadcms/db-vercel-postgres
-```
-
-```ts
-// payload.config.ts
-import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
-
-export default buildConfig({
-  // ...
-  db: vercelPostgresAdapter({
-    pool: {
-      connectionString: process.env.POSTGRES_URL || '',
-    },
-  }),
-  // ...
-```
-
-We also support Vercel's blob storage:
-
-```bash
-pnpm add @payloadcms/storage-vercel-blob
-```
-
-```ts
-// payload.config.ts
-import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
-
-export default buildConfig({
-  // ...
-  plugins: [
-    vercelBlobStorage({
-      collections: {
-        [Media.slug]: true,
-      },
-      token: process.env.BLOB_READ_WRITE_TOKEN || '',
-    }),
-  ],
-  // ...
-```
-
-There is also a simplified [one click deploy](https://github.com/payloadcms/payload/tree/templates/with-vercel-postgres) to Vercel should you need it.
-
-### Self-hosting
-
-Before deploying your app, you need to:
-
-1. Ensure your app builds and serves in production. See [Production](#production) for more details.
-2. You can then deploy Payload as you would any other Node.js or Next.js application either directly on a VPS, DigitalOcean's Apps Platform, via Coolify or more. More guides coming soon.
-
-You can also deploy your app manually, check out the [deployment documentation](https://payloadcms.com/docs/production/deployment) for full details.
-
-## Questions
-
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+For Payload CMS: [Discord](https://discord.com/invite/payload) or [GitHub discussions](https://github.com/payloadcms/payload/discussions).

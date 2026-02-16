@@ -1,31 +1,50 @@
-version: '3'
-
 services:
-  payload:
-    image: node:18-alpine
+  app:
+    image: ${RSSNOTIFY_IMAGE:-ghcr.io/transformable-app/rssnotify:latest}
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
     ports:
       - '3000:3000'
-    volumes:
-      - .:/home/node/app
-      - node_modules:/home/node/app/node_modules
-    working_dir: /home/node/app/
-    command: sh -c "yarn install && yarn dev"
-    depends_on:
-      - mongo
-    env_file:
-      - .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME:-rssnotify}:${MONGO_INITDB_ROOT_PASSWORD:-change-me}@mongo:27017/${MONGO_DATABASE:-rssnotify}?authSource=admin
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:?set PAYLOAD_SECRET}
+      NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL:?set NEXT_PUBLIC_SERVER_URL}
+      CRON_SECRET: ${CRON_SECRET:?set CRON_SECRET}
+      PREVIEW_SECRET: ${PREVIEW_SECRET:?set PREVIEW_SECRET}
+      RSS_FETCH_JITTER_MIN_SECONDS: ${RSS_FETCH_JITTER_MIN_SECONDS:-1}
+      RSS_FETCH_JITTER_MAX_SECONDS: ${RSS_FETCH_JITTER_MAX_SECONDS:-20}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      MODEL_NAME: ${MODEL_NAME:-gpt-4o-mini}
 
   mongo:
-    image: mongo:latest
-    ports:
-      - '27017:27017'
+    image: mongo:7.0
+    restart: unless-stopped
     command:
+      - --bind_ip_all
       - --storageEngine=wiredTiger
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-rssnotify}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-change-me}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-rssnotify}
     volumes:
-      - data:/data/db
-    logging:
-      driver: none
+      - mongo_data:/data/db
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'mongosh',
+          '--quiet',
+          'mongodb://$${MONGO_INITDB_ROOT_USERNAME}:$${MONGO_INITDB_ROOT_PASSWORD}@localhost:27017/admin?authSource=admin',
+          '--eval',
+          'db.runCommand({ ping: 1 }).ok',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
 volumes:
-  data:
-  node_modules:
+  mongo_data:
