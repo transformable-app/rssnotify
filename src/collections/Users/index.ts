@@ -16,7 +16,9 @@ export const Users: CollectionConfig = {
     group: 'Settings',
     useAsTitle: 'name',
   },
-  auth: true,
+  auth: {
+    tokenExpiration: 7 * 24 * 60 * 60, // 7 days (in seconds)
+  },
   fields: [
     {
       name: 'name',

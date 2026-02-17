@@ -1,9 +1,11 @@
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
+import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import sharp from 'sharp'
 import path from 'path'
 import { en } from 'payload/i18n/en'
 import { APIError, buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
+import nodemailer from 'nodemailer'
 
 import { FeedAutomations } from './collections/FeedAutomations'
 import { Notifications } from './collections/Notifications'
@@ -75,6 +77,13 @@ export default buildConfig({
   editor: defaultLexical,
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
+  }),
+  email: nodemailerAdapter({
+    defaultFromAddress: process.env.SMTP_FROM ?? 'noreply@localhost',
+    defaultFromName: process.env.SMTP_FROM_NAME ?? 'RSS Notify',
+    ...(process.env.SMTP_URL && {
+      transport: nodemailer.createTransport(process.env.SMTP_URL),
+    }),
   }),
   collections: [RssFeeds, FeedAutomations, Notifications, Users],
   cors: [

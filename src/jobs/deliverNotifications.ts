@@ -52,9 +52,11 @@ export const deliverNotificationsTask: TaskConfig = {
 
       if (updates.delivery?.email?.status === 'pending') {
         const emailResult = await sendEmail({
+          payload: req.payload,
           settings: emailSettings || {},
           subject: notification.title,
-          text: [notification.message, notification.sourceURL].filter(Boolean).join('\n\n'),
+          text: notification.message || notification.title,
+          sourceURL: notification.sourceURL,
         })
 
         updates.delivery.email = {

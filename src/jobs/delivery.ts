@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer'
+import type { Payload } from 'payload'
 
 export type EmailSettings = {
   enabled?: boolean | null
@@ -15,18 +15,41 @@ export type NtfySettings = {
   channels?: { topic?: string | null }[] | null
 }
 
-const getSmtpTransport = () => {
-  const smtpUrl = process.env.SMTP_URL
-  if (!smtpUrl) return null
-  return nodemailer.createTransport(smtpUrl)
+const getNtfyActionLabel = (url: string): string => {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase()
+    if (hostname.includes('reddit.com') || hostname.endsWith('redd.it')) {
+      return 'Open Reddit'
+    }
+  } catch {
+    // Invalid URLs are still passed to ntfy click/action as-is.
+  }
+
+  return 'Open Link'
 }
 
+const quoteNtfyHeaderValue = (value: string): string => `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+
+const buildNtfyActionsHeader = (url: string): string => {
+  const label = getNtfyActionLabel(url)
+  return `action=view, label=${quoteNtfyHeaderValue(label)}, url=${quoteNtfyHeaderValue(url)}, clear=true`
+}
+
+const escapeHtml = (s: string): string =>
+  s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+
 export const sendEmail = async (args: {
+  payload: Payload
   settings: EmailSettings
   subject: string
   text: string
+  sourceURL?: string | null
 }): Promise<{ status: 'sent' | 'skipped' | 'failed'; error?: string }> => {
-  const { settings, subject, text } = args
+  const { payload, settings, subject, text, sourceURL } = args
 
   if (!settings.enabled) {
     return { status: 'skipped', error: 'Email delivery disabled.' }
@@ -37,11 +60,6 @@ export const sendEmail = async (args: {
     return { status: 'skipped', error: 'No email recipients configured.' }
   }
 
-  const transport = getSmtpTransport()
-  if (!transport) {
-    return { status: 'failed', error: 'SMTP_URL is not configured.' }
-  }
-
   const fromAddress = settings.fromEmail
   if (!fromAddress) {
     return { status: 'failed', error: 'From email is not configured.' }
@@ -49,11 +67,17 @@ export const sendEmail = async (args: {
 
   const from = settings.fromName ? `${settings.fromName} <${fromAddress}>` : fromAddress
 
+  const textBody = sourceURL ? `${text}\n\nView source: ${sourceURL}` : text
+  const htmlBody = sourceURL
+    ? `<p>${escapeHtml(text)}</p><p><a href="${escapeHtml(sourceURL)}">View source</a></p>`
+    : `<p>${escapeHtml(text)}</p>`
+
   try {
-    await transport.sendMail({
+    await payload.sendEmail({
       to: recipients,
       subject,
-      text,
+      text: textBody,
+      html: htmlBody,
       from,
       replyTo: settings.replyTo || undefined,
     })
@@ -93,6 +117,7 @@ export const sendNtfy = async (args: {
 
   if (url) {
     headers.click = url
+    headers.actions = buildNtfyActionsHeader(url)
   }
 
   if (settings.authToken) {
