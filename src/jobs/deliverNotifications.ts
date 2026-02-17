@@ -4,6 +4,21 @@ import type { Notification } from '@/payload-types'
 import { sendEmail, sendNtfy } from './delivery'
 
 const MAX_NOTIFICATIONS_PER_RUN = 25
+const DEFAULT_SMTP_REQUEST_DELAY_MS = 500
+
+const sleep = async (ms: number): Promise<void> => {
+  await new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+const getSmtpRequestDelayMs = (): number => {
+  const raw = process.env.SMTP_REQUEST_DELAY_MS
+  if (!raw) return DEFAULT_SMTP_REQUEST_DELAY_MS
+
+  const parsed = Number(raw)
+  if (!Number.isFinite(parsed) || parsed < 0) return DEFAULT_SMTP_REQUEST_DELAY_MS
+
+  return Math.floor(parsed)
+}
 
 const determineOverallStatus = (statuses: Array<'sent' | 'failed' | 'skipped' | 'pending'>): Notification['overallStatus'] => {
   if (statuses.includes('failed')) return 'failed'
@@ -22,6 +37,9 @@ export const deliverNotificationsTask: TaskConfig = {
     },
   ],
   handler: async ({ req }) => {
+    const smtpRequestDelayMs = getSmtpRequestDelayMs()
+    let lastEmailRequestAt = 0
+
     const settings = await req.payload.findGlobal({
       slug: 'settings',
       req,
@@ -51,6 +69,13 @@ export const deliverNotificationsTask: TaskConfig = {
       const statuses: Array<'sent' | 'failed' | 'skipped' | 'pending'> = []
 
       if (updates.delivery?.email?.status === 'pending') {
+        if (smtpRequestDelayMs > 0 && lastEmailRequestAt > 0) {
+          const elapsed = Date.now() - lastEmailRequestAt
+          if (elapsed < smtpRequestDelayMs) {
+            await sleep(smtpRequestDelayMs - elapsed)
+          }
+        }
+
         const emailResult = await sendEmail({
           payload: req.payload,
           settings: emailSettings || {},
@@ -58,6 +83,7 @@ export const deliverNotificationsTask: TaskConfig = {
           text: notification.message || notification.title,
           sourceURL: notification.sourceURL,
         })
+        lastEmailRequestAt = Date.now()
 
         updates.delivery.email = {
           status: emailResult.status,
