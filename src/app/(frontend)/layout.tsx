@@ -1,13 +1,9 @@
 import type { Metadata } from 'next'
 
-import { Anton, Inter } from 'next/font/google'
 import { cn } from '@/utilities/ui'
 import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
 import React from 'react'
-
-const anton = Anton({ weight: '400', subsets: ['latin'], variable: '--font-anton' })
-const inter = Inter({ weight: ['600', '700'], subsets: ['latin'], variable: '--font-inter' })
 
 import { AdminBar } from '@/components/AdminBar'
 import { Footer } from '@/Footer/Component'
@@ -72,7 +68,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const hasCustomFavicon = favicon !== null
 
   return (
-    <html className={cn(GeistSans.variable, GeistMono.variable, anton.variable, inter.variable)} lang="en" suppressHydrationWarning>
+    <html className={cn(GeistSans.variable, GeistMono.variable)} lang="en" suppressHydrationWarning>
       <head>
         <InitTheme />
         {hasCustomFavicon ? (

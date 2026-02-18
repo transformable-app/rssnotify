@@ -104,8 +104,8 @@ const config = {
         warning: 'hsl(var(--warning))',
       },
       fontFamily: {
-        anton: ['var(--font-anton)'],
-        inter: ['var(--font-inter)'],
+        anton: ['var(--font-geist-sans)'],
+        inter: ['var(--font-geist-sans)'],
         mono: ['var(--font-geist-mono)'],
         sans: ['var(--font-geist-sans)'],
       },

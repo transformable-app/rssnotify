@@ -97,7 +97,7 @@
 
 /* Hero slider: fonts and sizing for Lexical rich text (prose disabled on this RichText) */
 .hero-slider-content h1 {
-  font-family: var(--font-anton), sans-serif;
+  font-family: var(--font-geist-sans), sans-serif;
   color: #fff5d0;
   font-size: 3.5rem;
   line-height: 1.05;
@@ -109,7 +109,7 @@
   }
 }
 .hero-slider-content p {
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-geist-sans), sans-serif;
   font-weight: 700;
   font-size: 1.5rem;
   color: white;
