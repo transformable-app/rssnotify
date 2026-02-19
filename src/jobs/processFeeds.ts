@@ -7,7 +7,7 @@ const MAX_ITEMS_PER_FEED = 25
 const MAX_MODEL_RAW_CHARS = 2000
 const MAX_MODEL_COMMENT_CHARS = 800
 const MAX_MODEL_COMMENT_COUNT = 20
-const DEFAULT_PROCESS_FEEDS_CRON = '0 0 * * * *'
+const DEFAULT_PROCESS_FEEDS_CRON = '* * * * *'
 
 const processFeedsCron = process.env.PROCESS_FEEDS_CRON?.trim() || DEFAULT_PROCESS_FEEDS_CRON
 

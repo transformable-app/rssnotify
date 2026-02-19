@@ -92,10 +92,12 @@ Global that shows the job schedule and queue status. Used by the **process-feeds
 
 ## Jobs and schedule
 
-- **process-feeds** – Fetches RSS/Reddit/WordPress feeds, evaluates items with automations (and optionally OpenAI), creates notifications. Runs hourly by default (`0 0 * * * *`) and can be overridden with `PROCESS_FEEDS_CRON`.
+- **process-feeds** – Fetches RSS/Reddit/WordPress feeds, evaluates items with automations (and optionally OpenAI), creates notifications. Runs every minute by default (`* * * * *`) and can be overridden with `PROCESS_FEEDS_CRON` (e.g. `0 0 * * *` for hourly).
 - **deliver-notifications** – Sends pending notifications via email and/or ntfy using Notification Settings. Runs every minute by default (`0 * * * * *`) and can be overridden with `DELIVER_NOTIFICATIONS_CRON`.
 
 Job execution is allowed for logged-in users or when the request includes the correct `CRON_SECRET` (e.g. for external cron or Vercel Cron).
+
+When using the external script `./scripts/run-payload-jobs-every-minute.sh`, it waits until past the next minute then runs jobs so scheduled tasks (with `waitUntil` set to the next cron tick) actually execute.
 
 ## Development
 
@@ -151,7 +153,7 @@ Payload job schedules are driven by `jobs.autoRun`. The image uses:
 
 Task defaults:
 
-- `PROCESS_FEEDS_CRON=0 0 * * * *`
+- `PROCESS_FEEDS_CRON=* * * * *` (every minute; use e.g. `0 0 * * *` for hourly)
 - `DELIVER_NOTIFICATIONS_CRON=0 * * * * *`
 
 Override `PAYLOAD_JOBS_AUTORUN_CRON`, `PROCESS_FEEDS_CRON`, and `DELIVER_NOTIFICATIONS_CRON` at runtime as needed. For multiple replicas, enable autoRun on a single instance to avoid duplicate processing.
