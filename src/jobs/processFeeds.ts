@@ -29,44 +29,79 @@ const runModelCheck = async (args: {
 
   const baseURL = process.env.OPENAI_BASE_URL || 'https://api.openai.com'
   const endpoint = baseURL.replace(/\/$/, '') + '/v1/chat/completions'
-  const modelName = model || process.env.MODEL_NAME || 'gpt-4o-mini'
+  const automationModel = typeof model === 'string' ? model.trim() : ''
+  const modelName = automationModel || process.env.MODEL_NAME || 'gpt-5-nano'
+  const debugFeeds = process.env.DEBUG_FEEDS === 'true'
+  const debugPreviewChars = 1000
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: modelName,
-      temperature: 0,
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
-        {
-          role: 'user',
-          content,
-        },
-      ],
-    }),
-  })
+  if (debugFeeds) {
+    console.log(
+      `[process-feeds debug] OpenAI request: endpoint=${endpoint} model=${modelName} contentChars=${content.length}`,
+    )
+  }
 
-  if (!response.ok) {
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
+          {
+            role: 'user',
+            content,
+          },
+        ],
+      }),
+    })
+
+    const rawResponse = await response.text()
+
+    if (debugFeeds) {
+      const preview =
+        rawResponse.length > debugPreviewChars
+          ? `${rawResponse.slice(0, debugPreviewChars)}...`
+          : rawResponse
+      console.log(
+        `[process-feeds debug] OpenAI response: status=${response.status} ok=${response.ok} body=${preview}`,
+      )
+    }
+
+    if (!response.ok) {
+      return false
+    }
+
+    let payload: { choices?: { message?: { content?: string } }[] } | null = null
+    try {
+      payload = JSON.parse(rawResponse) as { choices?: { message?: { content?: string } }[] }
+    } catch {
+      if (debugFeeds) {
+        console.log('[process-feeds debug] OpenAI response was not valid JSON')
+      }
+      return false
+    }
+
+    const rawAnswer = payload.choices?.[0]?.message?.content || ''
+    if (debugFeeds) {
+      console.log(`[process-feeds debug] model response (${modelName}): ${rawAnswer}`)
+    }
+    const answer = rawAnswer.toLowerCase()
+    return answer.includes('yes') || answer.includes('true')
+  } catch (error) {
+    if (debugFeeds) {
+      console.log(
+        `[process-feeds debug] OpenAI request failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      )
+    }
     return false
   }
-
-  const payload = (await response.json()) as {
-    choices?: { message?: { content?: string } }[]
-  }
-
-  const rawAnswer = payload.choices?.[0]?.message?.content || ''
-  if (process.env.DEBUG_FEEDS === 'true') {
-    console.log(`[process-feeds debug] model response (${modelName}): ${rawAnswer}`)
-  }
-  const answer = rawAnswer.toLowerCase()
-  return answer.includes('yes') || answer.includes('true')
 }
 
 const serializeRawData = (raw: unknown, limit = MAX_MODEL_RAW_CHARS): string | null => {
@@ -235,7 +270,7 @@ export const processFeedsTask: TaskConfig = {
   label: 'Process RSS feeds',
   schedule: [
     {
-      cron: '0 0 * * * *',
+      cron: '0 * * * * *',
       queue: 'feeds',
     },
   ],

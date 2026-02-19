@@ -60,7 +60,7 @@ export const FeedAutomations: CollectionConfig<'feed-automations'> = {
           label: 'OpenAI model',
           type: 'text',
           admin: {
-            description: 'Model name to use (e.g., gpt-4o-mini, openai/gpt-oss-120b, qwen/qwen3-next-80b).',
+            description: 'Model name to use (e.g., gpt-5-nano, openai/gpt-oss-120b, qwen/qwen3-next-80b).',
           },
         },
         {
