@@ -3,10 +3,9 @@ services:
     image: ${RSSNOTIFY_IMAGE:-ghcr.io/transformable-app/rssnotify:latest}
     restart: unless-stopped
     depends_on:
-      mongo:
-        condition: service_healthy
+      - mongo
     ports:
-      - '3000:3000'
+      - '30000:3000'
     environment:
       NODE_ENV: production
       DATABASE_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME:-rssnotify}:${MONGO_INITDB_ROOT_PASSWORD:-change-me}@mongo:27017/${MONGO_DATABASE:-rssnotify}?authSource=admin
@@ -32,19 +31,6 @@ services:
       MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-rssnotify}
     volumes:
       - mongo_data:/data/db
-    healthcheck:
-      test:
-        [
-          'CMD',
-          'mongosh',
-          '--quiet',
-          'mongodb://$${MONGO_INITDB_ROOT_USERNAME}:$${MONGO_INITDB_ROOT_PASSWORD}@localhost:27017/admin?authSource=admin',
-          '--eval',
-          'db.runCommand({ ping: 1 }).ok',
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
 
 volumes:
   mongo_data:
