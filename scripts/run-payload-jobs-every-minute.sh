@@ -26,23 +26,10 @@ wait_until_next_minute() {
   sleep "$sleep_sec"
 }
 
-first_run=true
 while true; do
   pnpm payload jobs:run --all-queues --handle-schedules
 
   # Give scheduled jobs time to become due (waitUntil = next :00), then run them.
   wait_until_next_minute
   pnpm payload jobs:run --all-queues
-
-  # No delay before the first run. Sleep only after it completes.
-  if [ "$first_run" = true ]; then
-    first_run=false
-    continue
-  fi
-
-  # Sleep 12–16 minutes plus a random 0–59 seconds.
-  # This waits after each run, so actual start times drift naturally.
-  base_sleep=$((12 * 60 + RANDOM % (4 * 60 + 1)))
-  jitter=$((RANDOM % 61))
-  sleep $((base_sleep + jitter))
 done

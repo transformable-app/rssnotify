@@ -7,9 +7,25 @@ const MAX_ITEMS_PER_FEED = 25
 const MAX_MODEL_RAW_CHARS = 2000
 const MAX_MODEL_COMMENT_CHARS = 800
 const MAX_MODEL_COMMENT_COUNT = 20
-const DEFAULT_PROCESS_FEEDS_CRON = '* * * * *'
+const DEFAULT_PROCESS_FEEDS_CRON = '0 * * * * *'
+const DEFAULT_PROCESS_FEEDS_MIN_DELAY_SECONDS = 12 * 60
+const DEFAULT_PROCESS_FEEDS_MAX_DELAY_SECONDS = 16 * 60 + 59
 
 const processFeedsCron = process.env.PROCESS_FEEDS_CRON?.trim() || DEFAULT_PROCESS_FEEDS_CRON
+let nextProcessFeedsEligibleAt = 0
+
+const parseDelaySeconds = (value: string | undefined, fallback: number): number => {
+  if (!value) return fallback
+  const parsed = Number.parseInt(value, 10)
+  if (Number.isNaN(parsed) || parsed < 0) return fallback
+  return parsed
+}
+
+const randomDelayMs = (minSeconds: number, maxSeconds: number): number => {
+  const min = Math.max(0, Math.floor(minSeconds))
+  const max = Math.max(min, Math.floor(maxSeconds))
+  return (min + Math.floor(Math.random() * (max - min + 1))) * 1000
+}
 
 const normalizeContent = (value?: string | null): string => {
   return (value || '').replace(/\s+/g, ' ').trim()
@@ -278,6 +294,30 @@ export const processFeedsTask: TaskConfig = {
     },
   ],
   handler: async ({ req }) => {
+    const now = Date.now()
+    if (now < nextProcessFeedsEligibleAt) {
+      const remainingSeconds = Math.ceil((nextProcessFeedsEligibleAt - now) / 1000)
+      return {
+        output: {
+          skipped: true,
+          reason: 'throttled',
+          remainingSeconds,
+          nextEligibleAt: new Date(nextProcessFeedsEligibleAt).toISOString(),
+        },
+      }
+    }
+
+    const minDelaySeconds = parseDelaySeconds(
+      process.env.PROCESS_FEEDS_MIN_DELAY_SECONDS,
+      DEFAULT_PROCESS_FEEDS_MIN_DELAY_SECONDS,
+    )
+    const maxDelaySeconds = parseDelaySeconds(
+      process.env.PROCESS_FEEDS_MAX_DELAY_SECONDS,
+      DEFAULT_PROCESS_FEEDS_MAX_DELAY_SECONDS,
+    )
+
+    nextProcessFeedsEligibleAt = Date.now() + randomDelayMs(minDelaySeconds, maxDelaySeconds)
+
     const debug = process.env.DEBUG_FEEDS === 'true'
     const debugLimit = Number.parseInt(process.env.DEBUG_FEEDS_LIMIT || '5', 10)
     const debugCounts = new Map<string, number>()
