@@ -5,6 +5,10 @@ import { sendEmail, sendNtfy } from './delivery'
 
 const MAX_NOTIFICATIONS_PER_RUN = 25
 const DEFAULT_SMTP_REQUEST_DELAY_MS = 500
+const DEFAULT_DELIVER_NOTIFICATIONS_CRON = '0 * * * * *'
+
+const deliverNotificationsCron =
+  process.env.DELIVER_NOTIFICATIONS_CRON?.trim() || DEFAULT_DELIVER_NOTIFICATIONS_CRON
 
 const sleep = async (ms: number): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, ms))
@@ -32,7 +36,7 @@ export const deliverNotificationsTask: TaskConfig = {
   label: 'Deliver notifications',
   schedule: [
     {
-      cron: '0 * * * * *',
+      cron: deliverNotificationsCron,
       queue: 'notifications',
     },
   ],

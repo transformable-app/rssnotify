@@ -8,6 +8,8 @@ declare global {
       CRON_SECRET?: string
       PAYLOAD_JOBS_AUTORUN?: 'true' | 'false'
       PAYLOAD_JOBS_AUTORUN_CRON?: string
+      PROCESS_FEEDS_CRON?: string
+      DELIVER_NOTIFICATIONS_CRON?: string
     }
   }
 }

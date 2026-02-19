@@ -9,7 +9,7 @@ Built with [Payload CMS](https://payloadcms.com)
 - **RSS Feeds** – Add Standard RSS, Reddit, or WordPress feed URLs; enable/disable per feed.
 - **Feed Automations** – Define rules per automation: optional OpenAI-based filtering, “notify every post,” and type-specific options (e.g. follow post RSS, process comments for Reddit/WordPress).
 - **Notifications** – View and manage generated alerts; delivery status (email / ntfy) and bulk actions in the admin.
-- **Scheduled jobs** – Process feeds and deliver notifications on a cron schedule (e.g. every minute for feeds, every minute for delivery).
+- **Scheduled jobs** – Process feeds and deliver notifications on a cron schedule (feeds hourly by default, delivery every minute by default).
 - **Notification delivery** – Email (SMTP) and/or ntfy; configurable in Settings.
 
 ## Quick Start
@@ -92,8 +92,8 @@ Global that shows the job schedule and queue status. Used by the **process-feeds
 
 ## Jobs and schedule
 
-- **process-feeds** – Fetches RSS/Reddit/WordPress feeds, evaluates items with automations (and optionally OpenAI), creates notifications. Run on a cron schedule (e.g. every minute).
-- **deliver-notifications** – Sends pending notifications via email and/or ntfy using Notification Settings. Run on a cron schedule (e.g. every minute).
+- **process-feeds** – Fetches RSS/Reddit/WordPress feeds, evaluates items with automations (and optionally OpenAI), creates notifications. Runs hourly by default (`0 0 * * * *`) and can be overridden with `PROCESS_FEEDS_CRON`.
+- **deliver-notifications** – Sends pending notifications via email and/or ntfy using Notification Settings. Runs every minute by default (`0 * * * * *`) and can be overridden with `DELIVER_NOTIFICATIONS_CRON`.
 
 Job execution is allowed for logged-in users or when the request includes the correct `CRON_SECRET` (e.g. for external cron or Vercel Cron).
 
@@ -144,12 +144,17 @@ docker run --rm -p 3000:3000 \
 
 #### Cron jobs in Docker
 
-Payload job schedules are driven by `jobs.autoRun` and run every minute by default. The image uses:
+Payload job schedules are driven by `jobs.autoRun`. The image uses:
 
 - `PAYLOAD_JOBS_AUTORUN=true`
 - `PAYLOAD_JOBS_AUTORUN_CRON=* * * * *`
 
-Override the schedule with `PAYLOAD_JOBS_AUTORUN_CRON` at runtime. For multiple replicas, enable autoRun on a single instance to avoid duplicate processing.
+Task defaults:
+
+- `PROCESS_FEEDS_CRON=0 0 * * * *`
+- `DELIVER_NOTIFICATIONS_CRON=0 * * * * *`
+
+Override `PAYLOAD_JOBS_AUTORUN_CRON`, `PROCESS_FEEDS_CRON`, and `DELIVER_NOTIFICATIONS_CRON` at runtime as needed. For multiple replicas, enable autoRun on a single instance to avoid duplicate processing.
 
 ## Production
 

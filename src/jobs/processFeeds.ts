@@ -7,6 +7,9 @@ const MAX_ITEMS_PER_FEED = 25
 const MAX_MODEL_RAW_CHARS = 2000
 const MAX_MODEL_COMMENT_CHARS = 800
 const MAX_MODEL_COMMENT_COUNT = 20
+const DEFAULT_PROCESS_FEEDS_CRON = '0 0 * * * *'
+
+const processFeedsCron = process.env.PROCESS_FEEDS_CRON?.trim() || DEFAULT_PROCESS_FEEDS_CRON
 
 const normalizeContent = (value?: string | null): string => {
   return (value || '').replace(/\s+/g, ' ').trim()
@@ -270,7 +273,7 @@ export const processFeedsTask: TaskConfig = {
   label: 'Process RSS feeds',
   schedule: [
     {
-      cron: '0 * * * * *',
+      cron: processFeedsCron,
       queue: 'feeds',
     },
   ],
