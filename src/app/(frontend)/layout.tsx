@@ -11,12 +11,11 @@ import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-import { draftMode } from 'next/headers'
+import { draftMode, headers } from 'next/headers'
 import { getCachedGlobal } from '@/utilities/getGlobals'
 
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
-import { getMediaUrl } from '@/utilities/getMediaUrl'
 
 /** Header global shape (Header global not in current Payload config) */
 interface HeaderType {
@@ -27,6 +26,34 @@ interface HeaderType {
 }
 
 const defaultHeader: HeaderType = {}
+
+const getHeaderMediaPath = (media?: { url?: string } | string | null): string | null => {
+  if (media && typeof media === 'object' && typeof media.url === 'string') {
+    return media.url
+  }
+
+  return null
+}
+
+const getRequestMetadataBase = async (): Promise<URL> => {
+  const fallback = getServerSideURL()
+  const fallbackProtocol = fallback.startsWith('https://') ? 'https' : 'http'
+
+  try {
+    const requestHeaders = await headers()
+    const host = requestHeaders.get('x-forwarded-host') || requestHeaders.get('host')
+    const protocol =
+      requestHeaders.get('x-forwarded-proto')?.split(',')[0]?.trim() || fallbackProtocol
+
+    if (host) {
+      return new URL(`${protocol}://${host}`)
+    }
+  } catch {
+    // ignore and use fallback
+  }
+
+  return new URL(fallback)
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { isEnabled } = await draftMode()
@@ -42,18 +69,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const metaTags = headerData?.metaTags || null
 
   // Get favicon URL from Header global or fall back to default
-  const favicon =
-    headerData?.favicon && typeof headerData.favicon === 'object' && 'url' in headerData.favicon
-      ? getMediaUrl(headerData.favicon.url as string)
-      : null
+  const favicon = getHeaderMediaPath(headerData?.favicon)
 
   // Get apple touch icon URL from Header global if available
-  const appleTouchIcon =
-    headerData?.appleTouchIcon &&
-    typeof headerData.appleTouchIcon === 'object' &&
-    'url' in headerData.appleTouchIcon
-      ? getMediaUrl(headerData.appleTouchIcon.url as string)
-      : null
+  const appleTouchIcon = getHeaderMediaPath(headerData?.appleTouchIcon)
 
   // Determine favicon type and add cache busting
   // Use the header's updatedAt timestamp for cache busting (changes when favicon is updated)
@@ -116,18 +135,10 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   // Get favicon URL from Header global
-  const favicon =
-    headerData?.favicon && typeof headerData.favicon === 'object' && 'url' in headerData.favicon
-      ? getMediaUrl(headerData.favicon.url as string)
-      : null
+  const favicon = getHeaderMediaPath(headerData?.favicon)
 
   // Get apple touch icon URL from Header global if available
-  const appleTouchIcon =
-    headerData?.appleTouchIcon &&
-    typeof headerData.appleTouchIcon === 'object' &&
-    'url' in headerData.appleTouchIcon
-      ? getMediaUrl(headerData.appleTouchIcon.url as string)
-      : null
+  const appleTouchIcon = getHeaderMediaPath(headerData?.appleTouchIcon)
 
   // Add cache busting to favicon
   // Use the header's updatedAt timestamp for cache busting (changes when favicon is updated)
@@ -155,8 +166,10 @@ export async function generateMetadata(): Promise<Metadata> {
     icons.apple = appleTouchIcon
   }
 
+  const metadataBase = await getRequestMetadataBase()
+
   return {
-    metadataBase: new URL(getServerSideURL()),
+    metadataBase,
     icons,
     openGraph: mergeOpenGraph(),
     twitter: {
