@@ -27,9 +27,28 @@ interface HeaderType {
 
 const defaultHeader: HeaderType = {}
 
+const toRelativeURL = (value: string): string => {
+  if (!value) return value
+
+  if (value.startsWith('http://') || value.startsWith('https://')) {
+    try {
+      const parsed = new URL(value)
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`
+    } catch {
+      return value
+    }
+  }
+
+  return value
+}
+
 const getHeaderMediaPath = (media?: { url?: string } | string | null): string | null => {
+  if (typeof media === 'string') {
+    return toRelativeURL(media)
+  }
+
   if (media && typeof media === 'object' && typeof media.url === 'string') {
-    return media.url
+    return toRelativeURL(media.url)
   }
 
   return null
@@ -90,20 +109,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html className={cn(GeistSans.variable, GeistMono.variable)} lang="en" suppressHydrationWarning>
       <head>
         <InitTheme />
-        {hasCustomFavicon ? (
-          <>
-            {faviconIsSvg ? (
-              <link href={faviconUrl} rel="icon" type="image/svg+xml" />
-            ) : (
-              <link href={faviconUrl} rel="icon" sizes="32x32" />
-            )}
-          </>
-        ) : (
-          <>
-            <link href="/favicon.ico" rel="icon" sizes="32x32" />
-            <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
-          </>
-        )}
+        <link href="/favicon.ico" rel="icon" sizes="32x32" />
+        <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+        {hasCustomFavicon &&
+          (faviconIsSvg ? (
+            <link href={faviconUrl} rel="icon" type="image/svg+xml" />
+          ) : (
+            <link href={faviconUrl} rel="icon" sizes="32x32" />
+          ))}
         {appleTouchIcon && <link href={appleTouchIcon} rel="apple-touch-icon" />}
         {metaTags && <div dangerouslySetInnerHTML={{ __html: metaTags }} />}
       </head>
@@ -151,9 +164,17 @@ export async function generateMetadata(): Promise<Metadata> {
   if (favicon) {
     const faviconUrl = `${favicon}${favicon.includes('?') ? '&' : '?'}v=${faviconCacheBuster}`
     if (faviconUrl.includes('.svg')) {
-      icons.icon = { url: faviconUrl, type: 'image/svg+xml' }
+      icons.icon = [
+        { url: '/favicon.ico', sizes: '32x32' },
+        { url: '/favicon.svg', type: 'image/svg+xml' },
+        { url: faviconUrl, type: 'image/svg+xml' },
+      ]
     } else {
-      icons.icon = { url: faviconUrl, sizes: '32x32' }
+      icons.icon = [
+        { url: '/favicon.ico', sizes: '32x32' },
+        { url: '/favicon.svg', type: 'image/svg+xml' },
+        { url: faviconUrl, sizes: '32x32' },
+      ]
     }
   } else {
     icons.icon = [
