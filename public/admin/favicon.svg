@@ -1,0 +1,13 @@
+<svg
+  aria-hidden="true"
+  fill="none"
+  height="64"
+  viewBox="0 0 24 24"
+  width="64"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <rect width="24" height="24" rx="5" fill="#f97316"></rect>
+  <circle cx="5" cy="19" fill="#ffffff" r="2"></circle>
+  <path d="M4 11C8.41828 11 12 14.5817 12 19" stroke="#ffffff" stroke-width="2.4"></path>
+  <path d="M4 4C12.2843 4 19 10.7157 19 19" stroke="#ffffff" stroke-width="2.4"></path>
+</svg>

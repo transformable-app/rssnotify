@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
 const BYPASS_PREFIXES = ['/admin', '/api', '/_next', '/media'] as const
-const BYPASS_EXACT = new Set(['/favicon.ico'])
+const BYPASS_EXACT = new Set(['/favicon.ico', '/admin/favicon.ico', '/admin/favicon.svg'])
 
 function shouldBypass(pathname: string): boolean {
   if (BYPASS_EXACT.has(pathname)) return true
