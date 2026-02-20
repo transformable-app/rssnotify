@@ -15,7 +15,6 @@ export const Settings: GlobalConfig = {
   fields: [
     {
       name: 'notifications',
-      label: 'Notification Settings',
       type: 'group',
       fields: [
         {
