@@ -3,11 +3,13 @@ import { Gutter } from '@payloadcms/ui/elements/Gutter'
 
 import { tasks } from '@/jobs'
 import JobsResetButton from '@/components/Admin/JobsResetButton'
+import SyncStepNav from './SyncStepNav'
 import './index.scss'
 
 const JobsScheduleView: React.FC = () => {
   return (
     <div className="payload__container jobs-schedule-view">
+      <SyncStepNav />
       <Gutter>
         <div className="payload__flex">
           <div className="payload__flex__content">
