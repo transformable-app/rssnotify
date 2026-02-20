@@ -11,7 +11,7 @@ const JobsScheduleView: React.FC = () => {
       <Gutter>
         <div className="payload__flex">
           <div className="payload__flex__content">
-            <h1>Jobs</h1>
+            <h1>Jobs Schedule</h1>
             <p className="description">
               These are the background tasks configured in rssnotify and their schedules.
             </p>
