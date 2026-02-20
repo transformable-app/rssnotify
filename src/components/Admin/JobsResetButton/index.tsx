@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Button } from '@payloadcms/ui'
 
 const JobsResetButton: React.FC = () => {
   const [isResetting, setIsResetting] = useState(false)
@@ -33,12 +32,20 @@ const JobsResetButton: React.FC = () => {
   }
 
   return (
-    <div style={{ marginTop: '1rem' }}>
-      <Button onClick={handleReset} disabled={isResetting} buttonStyle="error">
+    <div className="jobs-schedule-view__reset">
+      <button
+        className="jobs-schedule-view__reset-button"
+        onClick={handleReset}
+        disabled={isResetting}
+        type="button"
+      >
         {isResetting ? 'Resetting...' : 'Reset all jobs'}
-      </Button>
+      </button>
+      <p className="jobs-schedule-view__reset-help">
+        Resets the job queue and scheduling stats so all jobs can be re-enqueued from a clean state.
+      </p>
       {error ? (
-        <p style={{ marginTop: '0.5rem', color: 'var(--theme-error-500)' }}>{error}</p>
+        <p className="jobs-schedule-view__reset-error">{error}</p>
       ) : null}
     </div>
   )
