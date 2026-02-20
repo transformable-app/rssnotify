@@ -15,6 +15,16 @@ const JobsScheduleView: React.FC = () => {
             <p className="description">
               These are the background tasks configured in rssnotify and their schedules.
             </p>
+            <div className="jobs-schedule-view__note">
+              <p>
+                <strong>Process feeds timing:</strong> the <code>process-feeds</code> job runs on a randomized interval
+                of about 12 to 16 minutes.
+              </p>
+              <p>
+                It is checked every minute, and checks that happen before the next eligible run are skipped as
+                throttled.
+              </p>
+            </div>
             <JobsResetButton />
 
             <div className="table" style={{ marginTop: '1.5rem' }}>

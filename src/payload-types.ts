@@ -95,11 +95,13 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     settings: Setting;
+    'model-settings': ModelSetting;
     jobs: Job;
     'payload-jobs-stats': PayloadJobsStat;
   };
   globalsSelect: {
     settings: SettingsSelect<false> | SettingsSelect<true>;
+    'model-settings': ModelSettingsSelect<false> | ModelSettingsSelect<true>;
     jobs: JobsSelect<false> | JobsSelect<true>;
     'payload-jobs-stats': PayloadJobsStatsSelect<false> | PayloadJobsStatsSelect<true>;
   };
@@ -654,6 +656,23 @@ export interface Setting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "model-settings".
+ */
+export interface ModelSetting {
+  id: string;
+  /**
+   * Used when an automation does not set its own model. Falls back to the MODEL_NAME env var, then gpt-5-nano.
+   */
+  defaultModel?: string | null;
+  /**
+   * Additional system instructions prepended before the evaluation prompt. If empty, defaults to YES/NO behavior including skipping announcement and moderator posts.
+   */
+  systemPrompt?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "jobs".
  */
 export interface Job {
@@ -715,6 +734,17 @@ export interface SettingsSelect<T extends boolean = true> {
                   };
             };
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "model-settings_select".
+ */
+export interface ModelSettingsSelect<T extends boolean = true> {
+  defaultModel?: T;
+  systemPrompt?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

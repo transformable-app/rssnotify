@@ -1,5 +1,10 @@
 import type { PayloadRequest, TaskConfig, Where } from 'payload'
 import type { FeedAutomation, Notification, RssFeed } from '@/payload-types'
+import {
+  DEFAULT_MODEL_BASE_PROMPT,
+  DEFAULT_MODEL_NAME,
+  MODEL_RESPONSE_CONSTRAINTS,
+} from '@/constants/modelDefaults'
 
 import { fetchFeedItems } from './rss'
 
@@ -35,21 +40,24 @@ const runModelCheck = async (args: {
   content: string
   model?: string | null
   prompt?: string | null
+  defaultModel?: string | null
+  defaultSystemPrompt?: string | null
 }): Promise<boolean> => {
-  const { content, model, prompt } = args
+  const { content, model, prompt, defaultModel, defaultSystemPrompt } = args
 
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) return false
 
-  const basePrompt =
-    prompt?.trim() ||
-    'Answer with YES if the content should trigger an alert. Otherwise answer NO.'
-  const systemPrompt = `${basePrompt}\n\nAlways answer with exactly YES or NO. Announcement posts, moderator posts, and welcome posts are always NO.`
+  const automationPrompt = prompt?.trim()
+  const configuredSystemPrompt = defaultSystemPrompt?.trim() || MODEL_RESPONSE_CONSTRAINTS
+  const evaluationPrompt = automationPrompt || DEFAULT_MODEL_BASE_PROMPT
+  const systemPrompt = `${configuredSystemPrompt}\n\n${evaluationPrompt}`
 
   const baseURL = process.env.OPENAI_BASE_URL || 'https://api.openai.com'
   const endpoint = baseURL.replace(/\/$/, '') + '/v1/chat/completions'
   const automationModel = typeof model === 'string' ? model.trim() : ''
-  const modelName = automationModel || process.env.MODEL_NAME || 'gpt-5-nano'
+  const configuredModel = typeof defaultModel === 'string' ? defaultModel.trim() : ''
+  const modelName = automationModel || configuredModel || process.env.MODEL_NAME || DEFAULT_MODEL_NAME
   const debugFeeds = process.env.DEBUG_FEEDS === 'true'
   const debugPreviewChars = 1000
 
@@ -338,7 +346,7 @@ export const processFeedsTask: TaskConfig = {
     }
     const parentNotified = new Map<string, boolean>()
 
-    const [feedsResult, automationsResult] = await Promise.all([
+    const [feedsResult, automationsResult, settingsResult] = await Promise.all([
       req.payload.find({
         collection: 'rss-feeds',
         where: { enabled: { equals: true } },
@@ -353,10 +361,17 @@ export const processFeedsTask: TaskConfig = {
         depth: 0,
         req,
       }),
+      req.payload.findGlobal({
+        slug: 'model-settings',
+        depth: 0,
+        req,
+      }),
     ])
 
     const feeds = feedsResult.docs as RssFeed[]
     const automations = automationsResult.docs as FeedAutomation[]
+    const settingsModel = settingsResult?.defaultModel
+    const settingsSystemPrompt = settingsResult?.systemPrompt
 
     if (debug) {
       req.payload.logger.info(
@@ -409,6 +424,8 @@ export const processFeedsTask: TaskConfig = {
               content: batchContent,
               model: typeof rules?.model === 'string' ? rules.model : undefined,
               prompt: typeof rules?.modelPrompt === 'string' ? rules.modelPrompt : undefined,
+              defaultModel: settingsModel,
+              defaultSystemPrompt: settingsSystemPrompt,
             })
 
             logDebug(
@@ -482,10 +499,12 @@ export const processFeedsTask: TaskConfig = {
             const modelOk = notifyEveryPost
               ? true
               : commentModelDecision ?? (await runModelCheck({
-                  content: modelContent,
-                  model: typeof rules?.model === 'string' ? rules.model : undefined,
-                  prompt: typeof rules?.modelPrompt === 'string' ? rules.modelPrompt : undefined,
-                }))
+                content: modelContent,
+                model: typeof rules?.model === 'string' ? rules.model : undefined,
+                prompt: typeof rules?.modelPrompt === 'string' ? rules.modelPrompt : undefined,
+                defaultModel: settingsModel,
+                defaultSystemPrompt: settingsSystemPrompt,
+              }))
 
             if (!notifyEveryPost && commentModelDecision === null) {
               logDebug(

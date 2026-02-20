@@ -12,6 +12,7 @@ import { Notifications } from './collections/Notifications'
 import { RssFeeds } from './collections/RssFeeds'
 import { Users } from './collections/Users'
 import { JobsGlobal } from './JobsGlobal/config'
+import { ModelSettings } from './ModelSettings/config'
 import { Settings } from './Settings/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
@@ -104,7 +105,7 @@ export default buildConfig({
       },
     },
   },
-  globals: [Settings, JobsGlobal],
+  globals: [Settings, ModelSettings, JobsGlobal],
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,
