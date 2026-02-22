@@ -2,6 +2,7 @@ import { default as default_845369c7144342b949d5848f8388954f } from '@/component
 import { default as default_d9f53139081ed28e3810d0ffb250d39b } from '@/components/Admin/NotificationsAutoRefresh'
 import { default as default_bff05ca2f6beb83182f492f9eb0af310 } from '@/components/Admin/NotificationsDeleteAll'
 import { default as default_e6080cf2a6380ab220552afd73667312 } from '@/components/Admin/JobsScheduleView'
+import { default as default_d92dc903e223f3cf452fddd454b9a2fa } from '@/components/Admin/NavLogoutVersion'
 import { RssIcon as RssIcon_1cb49e90c431a3a0ce88f18251ca15ac } from '@/components/Admin/graphics/RssBrand'
 import { RssLogo as RssLogo_1cb49e90c431a3a0ce88f18251ca15ac } from '@/components/Admin/graphics/RssBrand'
 import { default as default_1a7510af427896d367a49dbf838d2de6 } from '@/components/BeforeDashboard'
@@ -13,6 +14,7 @@ export const importMap = {
   "@/components/Admin/NotificationsAutoRefresh#default": default_d9f53139081ed28e3810d0ffb250d39b,
   "@/components/Admin/NotificationsDeleteAll#default": default_bff05ca2f6beb83182f492f9eb0af310,
   "@/components/Admin/JobsScheduleView#default": default_e6080cf2a6380ab220552afd73667312,
+  "@/components/Admin/NavLogoutVersion#default": default_d92dc903e223f3cf452fddd454b9a2fa,
   "@/components/Admin/graphics/RssBrand#RssIcon": RssIcon_1cb49e90c431a3a0ce88f18251ca15ac,
   "@/components/Admin/graphics/RssBrand#RssLogo": RssLogo_1cb49e90c431a3a0ce88f18251ca15ac,
   "@/components/BeforeDashboard#default": default_1a7510af427896d367a49dbf838d2de6,
