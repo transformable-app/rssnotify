@@ -98,6 +98,9 @@
     "pnpm": "^9 || ^10"
   },
   "pnpm": {
+    "overrides": {
+      "minimatch": ">=10.2.1"
+    },
     "onlyBuiltDependencies": [
       "sharp",
       "esbuild",
