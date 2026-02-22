@@ -99,7 +99,8 @@
   },
   "pnpm": {
     "overrides": {
-      "minimatch": ">=10.2.1"
+      "minimatch": ">=10.2.1",
+      "payload>ajv": ">=8.18.0"
     },
     "onlyBuiltDependencies": [
       "sharp",
