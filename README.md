@@ -1,6 +1,6 @@
 # rssnotify
 
-RSS feed monitor that evaluates feed items (optionally with OpenAI), creates notifications when content matches your rules, and delivers them via email and/or [ntfy](https://ntfy.sh).
+RSS feed monitor that evaluates feed items with OpenAI API compatible models, creates notifications when content matches your rules, and delivers them via email and/or [ntfy](https://ntfy.sh).
 
 Built with [Payload CMS](https://payloadcms.com)
 
@@ -9,7 +9,7 @@ Built with [Payload CMS](https://payloadcms.com)
 - **RSS Feeds** – Add Standard RSS, Reddit, or WordPress feed URLs; enable/disable per feed.
 - **Feed Automations** – Define rules per automation: optional OpenAI-based filtering, “notify every post,” and type-specific options (e.g. follow post RSS, process comments for Reddit/WordPress).
 - **Notifications** – View and manage generated alerts; delivery status (email / ntfy) and bulk actions in the admin.
-- **Scheduled jobs** – Process feeds and deliver notifications on a cron schedule (feeds hourly by default, delivery every minute by default).
+- **Scheduled jobs** – Process feeds and deliver notifications on a cron schedule.
 - **Notification delivery** – Email (SMTP) and/or ntfy; configurable in Settings.
 
 ## Quick Start
@@ -129,8 +129,6 @@ The app image is built from the project Dockerfile; Compose uses `ghcr.io/transf
 Images are published to GitHub Container Registry:
 
 - `ghcr.io/transformable-app/rssnotify`
-
-On push to `main` (and on `v*` tags), GitHub Actions builds and pushes the image.
 
 #### Run the published image
 
