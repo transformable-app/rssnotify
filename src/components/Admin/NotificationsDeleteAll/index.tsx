@@ -33,13 +33,23 @@ const NotificationsDeleteAll: React.FC = () => {
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center' }}>
+    <div
+      className="notifications-desktop-only-action"
+      style={{ display: 'flex', alignItems: 'center' }}
+    >
       <Button onClick={handleDelete} disabled={isDeleting} buttonStyle="secondary">
         {isDeleting ? 'Deleting...' : 'Delete all notifications'}
       </Button>
       {error ? (
         <p style={{ marginTop: '0.5rem', color: 'var(--theme-error-500)' }}>{error}</p>
       ) : null}
+      <style>{`
+        @media (max-width: 768px) {
+          .notifications-desktop-only-action {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

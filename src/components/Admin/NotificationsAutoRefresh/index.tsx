@@ -48,6 +48,7 @@ const NotificationsAutoRefresh: React.FC = () => {
 
   return (
     <div
+      className="notifications-desktop-only-action"
       style={{
         display: 'flex',
         gap: '0.5rem',
@@ -61,6 +62,13 @@ const NotificationsAutoRefresh: React.FC = () => {
       >
         {enabled ? 'Auto refresh: on' : 'Auto refresh: off'}
       </Button>
+      <style>{`
+        @media (max-width: 768px) {
+          .notifications-desktop-only-action {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }
