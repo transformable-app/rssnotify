@@ -25,4 +25,116 @@
   &__seed-link {
     margin-top: base(1);
   }
+
+  &__notifications {
+    margin-top: base(1);
+
+    h4 {
+      margin: 0 0 base(0.35);
+    }
+
+    p {
+      margin: 0;
+    }
+  }
+
+  &__notifications-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: base(0.75);
+  }
+
+  &__notifications-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th,
+    td {
+      text-align: left;
+      vertical-align: top;
+      padding: base(0.35) 0;
+      border-bottom: 1px solid var(--theme-elevation-150);
+    }
+
+    th:last-child,
+    td:last-child {
+      text-align: right;
+      width: 1%;
+      white-space: nowrap;
+    }
+
+    .before-dashboard__title-wrap {
+      min-width: 0;
+      display: grid;
+      gap: 0.1rem;
+    }
+
+    .before-dashboard__title-link {
+      display: inline-block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .before-dashboard__title-mobile {
+      display: none;
+    }
+
+    .before-dashboard__subtext {
+      font-size: 0.8rem;
+      color: var(--theme-text-dimmed);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .before-dashboard__meta {
+      color: var(--theme-text-dimmed);
+      font-size: 0.9rem;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    &__notifications-table {
+      .before-dashboard__title-desktop {
+        display: none;
+      }
+
+      .before-dashboard__title-mobile {
+        display: inline;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tbody,
+      tr,
+      td {
+        display: block;
+        width: 100%;
+      }
+
+      tr {
+        padding: base(0.35) 0;
+        border-bottom: 1px solid var(--theme-elevation-150);
+      }
+
+      td {
+        border-bottom: 0;
+        padding: 0;
+      }
+
+      td:last-child {
+        margin-top: base(0.35);
+        text-align: left;
+      }
+    }
+  }
 }
