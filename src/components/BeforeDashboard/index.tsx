@@ -36,11 +36,23 @@ const truncateText = (value: string, maxLength: number): string => {
   return `${value.slice(0, maxLength - 1).trimEnd()}...`
 }
 
+const getAutomationLabel = (value: unknown): string => {
+  if (!value) return 'n/a'
+  if (typeof value === 'string') return value
+  if (typeof value === 'object') {
+    const asRecord = value as Record<string, unknown>
+    const name = typeof asRecord.name === 'string' ? asRecord.name : undefined
+    const id = typeof asRecord.id === 'string' ? asRecord.id : undefined
+    return name || id || 'n/a'
+  }
+  return 'n/a'
+}
+
 const BeforeDashboard = async (): Promise<React.JSX.Element> => {
   const payload = await getPayload({ config })
   const notifications = await payload.find({
     collection: 'notifications',
-    depth: 0,
+    depth: 1,
     limit: 5,
     sort: '-createdAt',
   })
@@ -63,7 +75,7 @@ const BeforeDashboard = async (): Promise<React.JSX.Element> => {
       {notifications.docs.length > 0 ? (
         <section className={`${baseClass}__notifications`}>
           <div className={`${baseClass}__notifications-head`}>
-            <h4>Latest notifications</h4>
+            <h2>Latest notifications</h2>
             <a href="/admin/collections/notifications">All notifications</a>
           </div>
           <table className={`${baseClass}__notifications-table`}>
@@ -94,20 +106,21 @@ const BeforeDashboard = async (): Promise<React.JSX.Element> => {
                           </span>
                         </a>
                         <small className={`${baseClass}__subtext`}>
-                          Status: {notification.overallStatus} | Matched: {formatDate(notification.matchedAt)} |
-                          Created: {formatDate(notification.createdAt)}
+                          Status: {notification.overallStatus} | Automation:{' '}
+                          {getAutomationLabel(notification.automation)} | Matched: {formatDate(notification.matchedAt)}{' '}
+                          | Created: {formatDate(notification.createdAt)}
                         </small>
                       </div>
                     </td>
                     <td>
                       {sourceURL ? (
                         <a className={`${baseClass}__meta`} href={sourceURL} rel="noreferrer" target="_blank">
-                          <span>Source link</span>
+                          <span>Open link</span>
                           <ExternalLink aria-hidden size={14} />
                         </a>
                       ) : (
                         <span className={`${baseClass}__meta`} aria-disabled>
-                          <span>Source link</span>
+                          <span>Open link</span>
                           <ExternalLink aria-hidden size={14} />
                         </span>
                       )}
