@@ -3,6 +3,7 @@ import React from 'react'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { ExternalLink } from 'lucide-react'
+import { LocalDateTime } from './LocalDateTime'
 
 import './index.scss'
 
@@ -18,17 +19,6 @@ const coerceUrl = (value: unknown): string | null => {
     return (url || href || '').trim() || null
   }
   return null
-}
-
-const formatDate = (value: string | null | undefined): string => {
-  if (!value) return 'n/a'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'n/a'
-
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date)
 }
 
 const truncateText = (value: string, maxLength: number): string => {
@@ -107,8 +97,9 @@ const BeforeDashboard = async (): Promise<React.JSX.Element> => {
                         </a>
                         <small className={`${baseClass}__subtext`}>
                           Status: {notification.overallStatus} | Automation:{' '}
-                          {getAutomationLabel(notification.automation)} | Matched: {formatDate(notification.matchedAt)}{' '}
-                          | Created: {formatDate(notification.createdAt)}
+                          {getAutomationLabel(notification.automation)} | Matched:{' '}
+                          <LocalDateTime value={notification.matchedAt} /> | Created:{' '}
+                          <LocalDateTime value={notification.createdAt} />
                         </small>
                       </div>
                     </td>
