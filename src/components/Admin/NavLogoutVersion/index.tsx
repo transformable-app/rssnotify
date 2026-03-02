@@ -1,9 +1,12 @@
 'use client'
 
-import { Logout } from '@payloadcms/ui'
+import { LogOut } from 'lucide-react'
+import Link from 'next/link'
 import packageJson from '../../../../package.json'
 
 const releasesUrl = 'https://github.com/transformable-app/rssnotify/releases'
+
+const iconSize = 16
 
 const NavLogoutVersion = () => {
   return (
@@ -16,7 +19,21 @@ const NavLogoutVersion = () => {
       }}
     >
       <span title="Log out">
-        <Logout />
+        <Link
+          href="/admin/logout"
+          style={{
+            color: 'var(--theme-elevation-500)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textDecoration: 'none',
+            padding: 'var(--base)',
+            borderRadius: 'var(--border-radius-s)',
+          }}
+          className="nav-logout-link"
+        >
+          <LogOut size={iconSize} strokeWidth={2} style={{ transform: 'scaleX(-1)' }} />
+        </Link>
       </span>
       <a
         href={releasesUrl}

@@ -1,6 +1,10 @@
 import { withPayload } from '@payloadcms/next/withPayload'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 import redirects from './redirects.js'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const NEXT_PUBLIC_SERVER_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
   ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
@@ -32,11 +36,16 @@ const nextConfig = {
         .filter(Boolean),
     ],
   },
-  webpack: (webpackConfig) => {
+  webpack: (webpackConfig, { isServer }) => {
     webpackConfig.resolve.extensionAlias = {
       '.cjs': ['.cts', '.cjs'],
       '.js': ['.ts', '.tsx', '.js', '.jsx'],
       '.mjs': ['.mts', '.mjs'],
+    }
+    // Resolve strnum for fast-xml-parser (pnpm + Next.js bundle can't resolve it)
+    webpackConfig.resolve.alias = {
+      ...webpackConfig.resolve.alias,
+      strnum: path.resolve(__dirname, 'src/lib/strnum.js'),
     }
 
     return webpackConfig
