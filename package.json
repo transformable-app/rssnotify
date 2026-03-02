@@ -1,6 +1,6 @@
 {
   "name": "rssnotify",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "RSS feed monitor that evaluates feed items with OpenAI compatibile models and delivers notifications via email and/or ntfy.",
   "license": "MIT",
   "source": "https://github.com/transformable-app/rssnotify",
@@ -38,7 +38,7 @@
     "@payloadcms/plugin-search": "3.77.0",
     "@payloadcms/plugin-seo": "3.77.0",
     "@payloadcms/richtext-lexical": "3.77.0",
-    "@payloadcms/ui": "3.78.0",
+    "@payloadcms/ui": "3.77.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-checkbox": "^1.0.4",
