@@ -8,6 +8,12 @@ overrides:
   rollup: '>=4.59.0'
   minimatch: '>=10.2.3'
   payload>ajv: '>=8.18.0'
+  dompurify: 3.2.7
+
+patchedDependencies:
+  dompurify@3.2.7:
+    hash: 64c4a7d5b602556767093492acd136c89307a3cc7ac3897deacab74c3847ecfb
+    path: patches/dompurify@3.2.7.patch
 
 importers:
 
@@ -3170,7 +3176,7 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+    deprecated: Glob versions prior to v9 are no longer supported
 
   globals@14.0.0:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
@@ -7510,7 +7516,7 @@ snapshots:
       '@babel/runtime': 7.28.6
       csstype: 3.2.3
 
-  dompurify@3.2.7:
+  dompurify@3.2.7(patch_hash=64c4a7d5b602556767093492acd136c89307a3cc7ac3897deacab74c3847ecfb):
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -8755,7 +8761,7 @@ snapshots:
 
   monaco-editor@0.55.1:
     dependencies:
-      dompurify: 3.2.7
+      dompurify: 3.2.7(patch_hash=64c4a7d5b602556767093492acd136c89307a3cc7ac3897deacab74c3847ecfb)
       marked: 14.0.0
 
   mongodb-connection-string-url@3.0.2:

@@ -1,6 +1,6 @@
 {
   "name": "rssnotify",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "RSS feed monitor that evaluates feed items with OpenAI compatibile models and delivers notifications via email and/or ntfy.",
   "license": "MIT",
   "source": "https://github.com/transformable-app/rssnotify",
@@ -103,12 +103,16 @@
     "overrides": {
       "rollup": ">=4.59.0",
       "minimatch": ">=10.2.3",
-      "payload>ajv": ">=8.18.0"
+      "payload>ajv": ">=8.18.0",
+      "dompurify": "3.2.7"
     },
     "onlyBuiltDependencies": [
       "sharp",
       "esbuild",
       "unrs-resolver"
-    ]
+    ],
+    "patchedDependencies": {
+      "dompurify@3.2.7": "patches/dompurify@3.2.7.patch"
+    }
   }
 }
