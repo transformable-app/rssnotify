@@ -104,7 +104,8 @@
       "rollup": ">=4.59.0",
       "minimatch": ">=10.2.3",
       "payload>ajv": ">=8.18.0",
-      "dompurify": "3.2.7"
+      "dompurify": "3.2.7",
+      "immutable": ">=4.3.8"
     },
     "onlyBuiltDependencies": [
       "sharp",
