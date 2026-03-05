@@ -104,16 +104,13 @@
       "rollup": ">=4.59.0",
       "minimatch": ">=10.2.3",
       "payload>ajv": ">=8.18.0",
-      "dompurify": "3.2.7",
+      "dompurify": "https://codeload.github.com/cure53/DOMPurify/tar.gz/729097f63a78e3e0e9f771e648f462bee100e78f",
       "immutable": ">=4.3.8"
     },
     "onlyBuiltDependencies": [
       "sharp",
       "esbuild",
       "unrs-resolver"
-    ],
-    "patchedDependencies": {
-      "dompurify@3.2.7": "patches/dompurify@3.2.7.patch"
-    }
+    ]
   }
 }

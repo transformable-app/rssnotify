@@ -8,13 +8,8 @@ overrides:
   rollup: '>=4.59.0'
   minimatch: '>=10.2.3'
   payload>ajv: '>=8.18.0'
-  dompurify: 3.2.7
+  dompurify: https://codeload.github.com/cure53/DOMPurify/tar.gz/729097f63a78e3e0e9f771e648f462bee100e78f
   immutable: '>=4.3.8'
-
-patchedDependencies:
-  dompurify@3.2.7:
-    hash: 64c4a7d5b602556767093492acd136c89307a3cc7ac3897deacab74c3847ecfb
-    path: patches/dompurify@3.2.7.patch
 
 importers:
 
@@ -2791,8 +2786,10 @@ packages:
   dom-helpers@5.2.1:
     resolution: {integrity: sha512-nRCa7CK3VTrM2NmGkIy4cbK7IZlgBE/PYMn55rrXefr5xXDP0LdtfPnblFDoVdcAfslJ7or6iqAUnx0CCGIWQA==}
 
-  dompurify@3.2.7:
-    resolution: {integrity: sha512-WhL/YuveyGXJaerVlMYGWhvQswa7myDG17P7Vu65EWC05o8vfeNbvNf4d/BOvH99+ZW+LlQsc1GDKMa1vNK6dw==}
+  dompurify@https://codeload.github.com/cure53/DOMPurify/tar.gz/729097f63a78e3e0e9f771e648f462bee100e78f:
+    resolution: {tarball: https://codeload.github.com/cure53/DOMPurify/tar.gz/729097f63a78e3e0e9f771e648f462bee100e78f}
+    version: 3.3.1
+    engines: {node: '>=20'}
 
   dotenv@16.4.7:
     resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
@@ -7517,7 +7514,7 @@ snapshots:
       '@babel/runtime': 7.28.6
       csstype: 3.2.3
 
-  dompurify@3.2.7(patch_hash=64c4a7d5b602556767093492acd136c89307a3cc7ac3897deacab74c3847ecfb):
+  dompurify@https://codeload.github.com/cure53/DOMPurify/tar.gz/729097f63a78e3e0e9f771e648f462bee100e78f:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -8762,7 +8759,7 @@ snapshots:
 
   monaco-editor@0.55.1:
     dependencies:
-      dompurify: 3.2.7(patch_hash=64c4a7d5b602556767093492acd136c89307a3cc7ac3897deacab74c3847ecfb)
+      dompurify: https://codeload.github.com/cure53/DOMPurify/tar.gz/729097f63a78e3e0e9f771e648f462bee100e78f
       marked: 14.0.0
 
   mongodb-connection-string-url@3.0.2:
