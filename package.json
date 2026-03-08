@@ -57,7 +57,7 @@
     "fast-xml-parser": ">=5.3.8",
     "geist": "^1.7.0",
     "graphql": "^16.13.0",
-    "lucide-react": "^0.575.0",
+    "lucide-react": "^0.577.0",
     "next": "15.5.10",
     "nodemailer": "^7.0.11",
     "payload": "3.77.0",
