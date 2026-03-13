@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url'
 import nodemailer from 'nodemailer'
 
 import { FeedAutomations } from './collections/FeedAutomations'
+import { AutomationHistory } from './collections/NotificationHistory'
 import { Notifications } from './collections/Notifications'
 import { RssFeeds } from './collections/RssFeeds'
 import { Users } from './collections/Users'
@@ -89,7 +90,7 @@ export default buildConfig({
       transport: nodemailer.createTransport(process.env.SMTP_URL),
     }),
   }),
-  collections: [RssFeeds, FeedAutomations, Notifications, Users],
+  collections: [RssFeeds, FeedAutomations, Notifications, AutomationHistory, Users],
   cors: [
     getServerSideURL(),
     'https://payloadcms.3twenty9.com',

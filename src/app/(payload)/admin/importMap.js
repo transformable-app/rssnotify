@@ -1,4 +1,5 @@
 import { default as default_845369c7144342b949d5848f8388954f } from '@/components/Admin/NotificationsSourceUrlCell'
+import { default as default_be6e6449e947a153252b6d6dda7fd945 } from '@/components/Admin/OpenSourceURLButton'
 import { default as default_d9f53139081ed28e3810d0ffb250d39b } from '@/components/Admin/NotificationsAutoRefresh'
 import { default as default_bff05ca2f6beb83182f492f9eb0af310 } from '@/components/Admin/NotificationsDeleteAll'
 import { default as default_e6080cf2a6380ab220552afd73667312 } from '@/components/Admin/JobsScheduleView'
@@ -11,6 +12,7 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 
 export const importMap = {
   "@/components/Admin/NotificationsSourceUrlCell#default": default_845369c7144342b949d5848f8388954f,
+  "@/components/Admin/OpenSourceURLButton#default": default_be6e6449e947a153252b6d6dda7fd945,
   "@/components/Admin/NotificationsAutoRefresh#default": default_d9f53139081ed28e3810d0ffb250d39b,
   "@/components/Admin/NotificationsDeleteAll#default": default_bff05ca2f6beb83182f492f9eb0af310,
   "@/components/Admin/JobsScheduleView#default": default_e6080cf2a6380ab220552afd73667312,

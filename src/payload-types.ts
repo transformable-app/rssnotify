@@ -70,6 +70,7 @@ export interface Config {
     'rss-feeds': RssFeed;
     'feed-automations': FeedAutomation;
     notifications: Notification;
+    'automation-history': AutomationHistory;
     users: User;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
@@ -82,6 +83,7 @@ export interface Config {
     'rss-feeds': RssFeedsSelect<false> | RssFeedsSelect<true>;
     'feed-automations': FeedAutomationsSelect<false> | FeedAutomationsSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    'automation-history': AutomationHistorySelect<false> | AutomationHistorySelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
@@ -213,6 +215,71 @@ export interface Notification {
   };
   /**
    * Raw alert payload for debugging and auditing.
+   */
+  data?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "automation-history".
+ */
+export interface AutomationHistory {
+  id: string;
+  /**
+   * Stable dedupe key for a feed item within a specific automation.
+   */
+  itemKey: string;
+  status: 'notified' | 'ignored';
+  /**
+   * Why this item ended up with its recorded status.
+   */
+  reason?: string | null;
+  automation: string | FeedAutomation;
+  feed: string | RssFeed;
+  sourceURL?: string | null;
+  title?: string | null;
+  matchedAt?: string | null;
+  processedAt: string;
+  /**
+   * Total number of evaluation attempts for this item.
+   */
+  attemptCount: number;
+  /**
+   * How many retries were attempted after the initial ignored result.
+   */
+  retryCount: number;
+  /**
+   * When this ignored item becomes eligible for another evaluation.
+   */
+  nextRetryAt?: string | null;
+  retryExhausted: boolean;
+  notification?: (string | null) | Notification;
+  /**
+   * Chronological log of each evaluation attempt for this item.
+   */
+  checks?:
+    | {
+        checkedAt: string;
+        status: 'notified' | 'ignored';
+        reason?: string | null;
+        attemptNumber: number;
+        retryNumber: number;
+        nextRetryAt?: string | null;
+        notification?: (string | null) | Notification;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Raw processing payload for debugging and auditing.
    */
   data?:
     | {
@@ -393,6 +460,10 @@ export interface PayloadLockedDocument {
         value: string | Notification;
       } | null)
     | ({
+        relationTo: 'automation-history';
+        value: string | AutomationHistory;
+      } | null)
+    | ({
         relationTo: 'users';
         value: string | User;
       } | null);
@@ -511,6 +582,41 @@ export interface NotificationsSelect<T extends boolean = true> {
               sentAt?: T;
               error?: T;
             };
+      };
+  data?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "automation-history_select".
+ */
+export interface AutomationHistorySelect<T extends boolean = true> {
+  itemKey?: T;
+  status?: T;
+  reason?: T;
+  automation?: T;
+  feed?: T;
+  sourceURL?: T;
+  title?: T;
+  matchedAt?: T;
+  processedAt?: T;
+  attemptCount?: T;
+  retryCount?: T;
+  nextRetryAt?: T;
+  retryExhausted?: T;
+  notification?: T;
+  checks?:
+    | T
+    | {
+        checkedAt?: T;
+        status?: T;
+        reason?: T;
+        attemptNumber?: T;
+        retryNumber?: T;
+        nextRetryAt?: T;
+        notification?: T;
+        id?: T;
       };
   data?: T;
   updatedAt?: T;

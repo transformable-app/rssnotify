@@ -10,7 +10,7 @@ export const Notifications: CollectionConfig<'notifications'> = {
     plural: 'Notifications',
   },
   access: {
-    create: authenticated,
+    create: () => false,
     delete: authenticated,
     read: authenticated,
     update: authenticated,
@@ -19,6 +19,9 @@ export const Notifications: CollectionConfig<'notifications'> = {
     defaultColumns: ['title', 'sourceURL', 'automation', 'overallStatus', 'matchedAt', 'createdAt'],
     useAsTitle: 'title',
     components: {
+      edit: {
+        beforeDocumentControls: ['@/components/Admin/OpenSourceURLButton'],
+      },
       views: {
         list: {
           actions: [

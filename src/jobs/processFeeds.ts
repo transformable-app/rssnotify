@@ -1,5 +1,6 @@
 import type { PayloadRequest, TaskConfig, Where } from 'payload'
-import type { FeedAutomation, Notification, RssFeed } from '@/payload-types'
+import type { AutomationHistory, FeedAutomation, Notification, RssFeed } from '@/payload-types'
+import { createHash } from 'crypto'
 import {
   DEFAULT_MODEL_BASE_PROMPT,
   DEFAULT_MODEL_NAME,
@@ -15,6 +16,11 @@ const MAX_MODEL_COMMENT_COUNT = 20
 const DEFAULT_PROCESS_FEEDS_CRON = '0 * * * * *'
 const DEFAULT_PROCESS_FEEDS_MIN_DELAY_SECONDS = 12 * 60
 const DEFAULT_PROCESS_FEEDS_MAX_DELAY_SECONDS = 16 * 60 + 59
+const IGNORE_RETRY_DELAYS_MS = [
+  24 * 60 * 60 * 1000,
+  48 * 60 * 60 * 1000,
+  7 * 24 * 60 * 60 * 1000,
+] as const
 
 const processFeedsCron = process.env.PROCESS_FEEDS_CRON?.trim() || DEFAULT_PROCESS_FEEDS_CRON
 let nextProcessFeedsEligibleAt = 0
@@ -165,6 +171,18 @@ const buildCommentBatchModelContent = (args: {
     .join('\n\n')
 }
 
+const buildHistoryItemKey = (args: {
+  automationId: string
+  sourceURL?: string
+  title?: string
+}): string | null => {
+  const { automationId, sourceURL, title } = args
+  const value = sourceURL?.trim() || title?.trim()
+  if (!value) return null
+
+  return createHash('sha256').update(`${automationId}::${value}`).digest('hex')
+}
+
 const shouldProcessAutomation = (automation: FeedAutomation, feed: RssFeed): boolean => {
   if (!automation.enabled) return false
   if (automation.type !== feed.type) return false
@@ -205,6 +223,8 @@ type FeedItemWithFlags = Awaited<ReturnType<typeof fetchFeedItems>>[number] & {
   __parentContent?: string
 }
 
+type HistoryCheck = NonNullable<AutomationHistory['checks']>[number]
+
 const expandItemsForAutomation = async (item: FeedItemWithFlags, rules: Record<string, unknown> | null) => {
   const followPostRss = Boolean(rules?.followPostRss)
   const processComments = Boolean(rules?.processComments)
@@ -233,41 +253,190 @@ const expandItemsForAutomation = async (item: FeedItemWithFlags, rules: Record<s
   }
 }
 
-const hasNotification = async (args: {
+const getHistoryEntry = async (args: {
   req: PayloadRequest
   automationId: string
   sourceURL?: string
   title?: string
-}): Promise<boolean> => {
+}): Promise<AutomationHistory | null> => {
   const { req, automationId, sourceURL, title } = args
 
-  const where: Where | null = sourceURL
-    ? {
-        and: [
-          { automation: { equals: automationId } },
-          { sourceURL: { equals: sourceURL } },
-        ],
-      }
-    : title
-      ? {
-          and: [
-            { automation: { equals: automationId } },
-            { title: { equals: title } },
-          ],
-        }
-      : null
-
-  if (!where) return false
+  const itemKey = buildHistoryItemKey({ automationId, sourceURL, title })
+  if (!itemKey) return null
 
   const existing = await req.payload.find({
-    collection: 'notifications',
-    where,
+    collection: 'automation-history',
+    where: { itemKey: { equals: itemKey } } as Where,
     limit: 1,
     depth: 0,
     req,
   })
 
-  return existing.totalDocs > 0
+  return (existing.docs[0] as AutomationHistory | undefined) || null
+}
+
+const getRetryDate = (baseDate: Date, retryNumber: number): Date | null => {
+  const delay = IGNORE_RETRY_DELAYS_MS[retryNumber]
+  if (!delay) return null
+
+  return new Date(baseDate.getTime() + delay)
+}
+
+const getHistoryChecks = (history?: AutomationHistory | null): HistoryCheck[] => {
+  const existingChecks = Array.isArray(history?.checks) ? [...history.checks] : []
+  if (existingChecks.length > 0) {
+    return existingChecks as HistoryCheck[]
+  }
+
+  if (!history?.processedAt || !history?.status) {
+    return []
+  }
+
+  return [
+    {
+      checkedAt: history.processedAt,
+      status: history.status,
+      reason: history.reason,
+      attemptNumber: history.attemptCount || 1,
+      retryNumber: history.retryCount || 0,
+      nextRetryAt: history.nextRetryAt,
+      notification: history.notification,
+    } as HistoryCheck,
+  ]
+}
+
+const getStoredAttemptCount = (history?: AutomationHistory | null): number => {
+  if (!history) return 0
+  if (typeof history.attemptCount === 'number' && history.attemptCount > 0) {
+    return history.attemptCount
+  }
+
+  return getHistoryChecks(history).length
+}
+
+const getStoredRetryCount = (history?: AutomationHistory | null): number => {
+  if (!history) return 0
+  if (typeof history.retryCount === 'number' && history.retryCount >= 0) {
+    return history.retryCount
+  }
+
+  const checks = getHistoryChecks(history)
+  const lastCheck = checks[checks.length - 1]
+  return typeof lastCheck?.retryNumber === 'number' ? lastCheck.retryNumber : 0
+}
+
+const getEffectiveNextRetryAt = (history?: AutomationHistory | null): string | null => {
+  if (!history || history.status !== 'ignored' || history.retryExhausted) return null
+  if (history.nextRetryAt) return history.nextRetryAt
+  if (!history.processedAt) return null
+
+  const fallback = getRetryDate(new Date(history.processedAt), getStoredRetryCount(history))
+  return fallback?.toISOString() || null
+}
+
+const shouldSkipHistory = (history: AutomationHistory | null, now: Date): boolean => {
+  if (!history) return false
+  if (history.status === 'notified') return true
+  if (history.retryExhausted) return true
+  const nextRetryAt = getEffectiveNextRetryAt(history)
+  if (!nextRetryAt) return false
+
+  return new Date(nextRetryAt).getTime() > now.getTime()
+}
+
+const upsertHistory = async (args: {
+  req: PayloadRequest
+  history?: AutomationHistory | null
+  automation: FeedAutomation
+  feed: RssFeed
+  title?: string
+  sourceURL?: string
+  matchedAt?: string
+  processedAt?: string
+  status: AutomationHistory['status']
+  reason: string
+  data?: AutomationHistory['data']
+  notificationId?: string
+}): Promise<AutomationHistory | null> => {
+  const {
+    req,
+    history,
+    automation,
+    feed,
+    title,
+    sourceURL,
+    matchedAt,
+    processedAt,
+    status,
+    reason,
+    data,
+    notificationId,
+  } = args
+  const itemKey = buildHistoryItemKey({
+    automationId: automation.id,
+    sourceURL,
+    title,
+  })
+
+  if (!itemKey) return null
+
+  const checkedAt = processedAt || new Date().toISOString()
+  const checkedAtDate = new Date(checkedAt)
+  const previousAttemptCount = getStoredAttemptCount(history)
+  const previousRetryCount = getStoredRetryCount(history)
+  const currentRetryNumber = history ? previousRetryCount + 1 : 0
+  const attemptCount = previousAttemptCount + 1
+  const nextRetryDate = status === 'ignored' ? getRetryDate(checkedAtDate, currentRetryNumber) : null
+  const nextRetryAt = nextRetryDate?.toISOString()
+  const retryExhausted = status === 'ignored' ? nextRetryDate === null : false
+  const checks = [
+    ...getHistoryChecks(history),
+    {
+      checkedAt,
+      status,
+      reason,
+      attemptNumber: attemptCount,
+      retryNumber: currentRetryNumber,
+      nextRetryAt,
+      notification: notificationId,
+    } as HistoryCheck,
+  ]
+
+  const payloadData = {
+    itemKey,
+    status,
+    reason,
+    automation: automation.id,
+    feed: feed.id,
+    sourceURL,
+    title,
+    matchedAt,
+    processedAt: checkedAt,
+    attemptCount,
+    retryCount: currentRetryNumber,
+    nextRetryAt,
+    retryExhausted,
+    notification: notificationId,
+    checks,
+    data,
+  } as unknown as Omit<AutomationHistory, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>
+
+  if (history?.id) {
+    return await req.payload.update({
+      collection: 'automation-history',
+      id: history.id,
+      data: payloadData,
+      draft: false,
+      req,
+    }) as AutomationHistory
+  }
+
+  return await req.payload.create({
+    collection: 'automation-history',
+    data: payloadData,
+    draft: false,
+    req,
+  }) as AutomationHistory
 }
 
 const buildNotificationPayload = (args: {
@@ -454,14 +623,14 @@ export const processFeedsTask: TaskConfig = {
             const parentKey = targetItem.__parentKey
             if (isRedditComment && parentKey) {
               if (!parentNotified.has(parentKey)) {
-                const parentAlreadyNotified = await hasNotification({
+                const parentHistory = await getHistoryEntry({
                   req,
                   automationId: automation.id,
                   sourceURL: parentKey,
                   title: targetItem.__parentTitle || undefined,
                 })
 
-                if (parentAlreadyNotified) {
+                if (parentHistory?.status === 'notified') {
                   parentNotified.set(parentKey, true)
                 }
               }
@@ -478,23 +647,25 @@ export const processFeedsTask: TaskConfig = {
               ? targetItem.commentsLink || targetItem.link
               : targetItem.link
 
-            const alreadyNotified = await hasNotification({
+            const existingHistory = await getHistoryEntry({
               req,
               automationId: automation.id,
               sourceURL: sourceURL || undefined,
               title: targetItem.title || undefined,
             })
 
+            const skipBecauseOfHistory = shouldSkipHistory(existingHistory, new Date())
+
             logDebug(
               debugKey,
-              `process-feeds debug: alreadyNotified for "${targetItem.title || 'untitled'}" => ${alreadyNotified}`,
+              `process-feeds debug: history state for "${targetItem.title || 'untitled'}" => ${existingHistory?.status || 'new'} skip=${skipBecauseOfHistory}`,
             )
 
-            if (alreadyNotified && (targetItem as FeedItemWithFlags).__isParent && parentKey) {
+            if (existingHistory?.status === 'notified' && (targetItem as FeedItemWithFlags).__isParent && parentKey) {
               parentNotified.set(parentKey, true)
             }
 
-            if (alreadyNotified) continue
+            if (skipBecauseOfHistory) continue
 
             const modelOk = notifyEveryPost
               ? true
@@ -513,7 +684,34 @@ export const processFeedsTask: TaskConfig = {
               )
             }
 
-            if (!modelOk) continue
+            if (!modelOk) {
+              await upsertHistory({
+                req,
+                history: existingHistory,
+                automation,
+                feed,
+                title: targetItem.title || feed.name,
+                sourceURL,
+                matchedAt: targetItem.publishedAt,
+                processedAt: new Date().toISOString(),
+                status: 'ignored',
+                reason: notifyEveryPost ? 'notify-every-post-disabled' : 'model-no-match',
+                data: {
+                  item: targetItem,
+                  feed: {
+                    id: feed.id,
+                    url: feed.url,
+                    name: feed.name,
+                  },
+                  automation: {
+                    id: automation.id,
+                    name: automation.name,
+                    type: automation.type,
+                  },
+                },
+              })
+              continue
+            }
 
             const notificationPayload = buildNotificationPayload({
               automation,
@@ -537,7 +735,7 @@ export const processFeedsTask: TaskConfig = {
               },
             })
 
-            await req.payload.create({
+            const notification = await req.payload.create({
               collection: 'notifications',
               data: {
                 ...notificationPayload,
@@ -545,6 +743,33 @@ export const processFeedsTask: TaskConfig = {
               } as unknown as Omit<Notification, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>,
               draft: false,
               req,
+            })
+
+            await upsertHistory({
+              req,
+              history: existingHistory,
+              automation,
+              feed,
+              title: notificationPayload.title ?? 'Feed match',
+              sourceURL,
+              matchedAt: targetItem.publishedAt,
+              processedAt: new Date().toISOString(),
+              status: 'notified',
+              reason: notifyEveryPost ? 'notify-every-post' : 'model-match',
+              notificationId: notification.id,
+              data: {
+                item: targetItem,
+                feed: {
+                  id: feed.id,
+                  url: feed.url,
+                  name: feed.name,
+                },
+                automation: {
+                  id: automation.id,
+                  name: automation.name,
+                  type: automation.type,
+                },
+              },
             })
 
             if ((targetItem as FeedItemWithFlags).__isParent && parentKey) {
