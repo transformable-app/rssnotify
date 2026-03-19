@@ -1,6 +1,6 @@
 {
   "name": "rssnotify",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "RSS feed monitor that evaluates feed items with OpenAI compatibile models and delivers notifications via email and/or ntfy.",
   "license": "MIT",
   "source": "https://github.com/transformable-app/rssnotify",
@@ -54,7 +54,7 @@
     "dotenv": "16.4.7",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.3.0",
-    "fast-xml-parser": ">=5.3.8",
+    "fast-xml-parser": ">=5.5.6",
     "geist": "^1.7.0",
     "graphql": "^16.13.0",
     "lucide-react": "0.577.0",
@@ -102,6 +102,7 @@
   "pnpm": {
     "overrides": {
       "file-type": ">=21.3.1",
+      "fast-xml-parser": ">=5.5.6",
       "rollup": ">=4.59.0",
       "minimatch": ">=10.2.3",
       "undici": ">=7.24.0",
