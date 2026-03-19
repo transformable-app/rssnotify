@@ -54,11 +54,11 @@
     "dotenv": "16.4.7",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.3.0",
-    "fast-xml-parser": ">=5.5.6",
+    "fast-xml-parser": ">=5.5.7",
     "geist": "^1.7.0",
     "graphql": "^16.13.0",
     "lucide-react": "0.577.0",
-    "next": "15.5.10",
+    "next": ">=15.5.14",
     "nodemailer": "7.0.12",
     "payload": "3.77.0",
     "prism-react-renderer": "^2.3.1",
@@ -102,11 +102,11 @@
   "pnpm": {
     "overrides": {
       "file-type": ">=21.3.1",
-      "fast-xml-parser": ">=5.5.6",
+      "fast-xml-parser": ">=5.5.7",
       "rollup": ">=4.59.0",
       "minimatch": ">=10.2.3",
       "undici": ">=7.24.0",
-      "flatted": ">=3.4.0",
+      "flatted": ">=3.4.2",
       "payload>ajv": ">=8.18.0",
       "dompurify": "https://codeload.github.com/cure53/DOMPurify/tar.gz/729097f63a78e3e0e9f771e648f462bee100e78f",
       "immutable": ">=4.3.8"
