@@ -18,6 +18,11 @@ const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '',
   trimValues: true,
+  processEntities: {
+    enabled: true,
+    maxTotalExpansions: 10000,
+    maxExpandedLength: 1000000,
+  },
 })
 
 const defaultUserAgent = `rssnotify/${packageJson.version}`
@@ -130,6 +135,41 @@ const randomDelayMs = (minSeconds = 1, maxSeconds = 20): number => {
   return (min + Math.floor(Math.random() * (max - min + 1))) * 1000
 }
 
+const isXmlContentType = (contentType: string | null): boolean => {
+  if (!contentType) return false
+  const normalized = contentType.toLowerCase()
+  return (
+    normalized.includes('application/rss+xml') ||
+    normalized.includes('application/atom+xml') ||
+    normalized.includes('application/xml') ||
+    normalized.includes('text/xml') ||
+    normalized.includes('+xml')
+  )
+}
+
+const looksLikeHtmlDocument = (value: string): boolean => {
+  const start = value.trimStart().slice(0, 500).toLowerCase()
+  return (
+    start.startsWith('<!doctype html') ||
+    start.startsWith('<html') ||
+    start.includes('<head') ||
+    start.includes('<body')
+  )
+}
+
+const looksLikeRedditBlockPage = (value: string): boolean => {
+  const sample = value.slice(0, 4000).toLowerCase()
+  return (
+    sample.includes('reddit') &&
+    (sample.includes('blocked') ||
+      sample.includes('request blocked') ||
+      sample.includes('whoa there') ||
+      sample.includes('access denied') ||
+      sample.includes('robot') ||
+      sample.includes('captcha'))
+  )
+}
+
 const extractAnchorLinks = (html: string): Array<{ href: string; text: string }> => {
   const anchors: Array<{ href: string; text: string }> = []
   const regex = /<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi
@@ -223,6 +263,52 @@ export const fetchText = async (url: string, timeoutMs = 15000): Promise<string>
   }
 }
 
+export const fetchXmlText = async (url: string, timeoutMs = 15000): Promise<string> => {
+  const minDelay = readEnvSeconds('RSS_FETCH_JITTER_MIN_SECONDS', 1)
+  const maxDelay = readEnvSeconds('RSS_FETCH_JITTER_MAX_SECONDS', 10)
+  await sleep(randomDelayMs(minDelay, maxDelay))
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'user-agent': userAgentForUrl(url),
+        accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9',
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`)
+    }
+
+    const contentType = response.headers.get('content-type')
+    const body = await response.text()
+
+    if (!isXmlContentType(contentType)) {
+      if (looksLikeRedditBlockPage(body)) {
+        throw new Error(`Expected XML feed but received a Reddit block/challenge page (${contentType || 'unknown content-type'})`)
+      }
+
+      if (looksLikeHtmlDocument(body)) {
+        throw new Error(`Expected XML feed but received HTML (${contentType || 'unknown content-type'})`)
+      }
+
+      throw new Error(`Expected XML feed but received ${contentType || 'unknown content-type'}`)
+    }
+
+    if (looksLikeHtmlDocument(body)) {
+      throw new Error('Expected XML feed but received HTML content')
+    }
+
+    return body
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
 export const parseFeedItems = (xml: string): FeedItem[] => {
   const parsed = parser.parse(xml)
 
@@ -292,7 +378,7 @@ export const parseFeedItems = (xml: string): FeedItem[] => {
 }
 
 export const fetchFeedItems = async (url: string): Promise<FeedItem[]> => {
-  const xml = await fetchText(url)
+  const xml = await fetchXmlText(url)
   return parseFeedItems(xml)
 }
 
