@@ -14,6 +14,11 @@ export type FeedItem = {
   raw?: unknown
 }
 
+export type FirecrawlSettings = {
+  host?: string | null
+  token?: string | null
+}
+
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '',
@@ -129,6 +134,11 @@ const readEnvSeconds = (key: string, fallback: number): number => {
   return Number.isNaN(parsed) ? fallback : parsed
 }
 
+const trimToUndefined = (value: string | null | undefined): string | undefined => {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : undefined
+}
+
 const randomDelayMs = (minSeconds = 1, maxSeconds = 20): number => {
   const min = Math.max(0, Math.floor(minSeconds))
   const max = Math.max(min, Math.floor(maxSeconds))
@@ -168,6 +178,43 @@ const looksLikeRedditBlockPage = (value: string): boolean => {
       sample.includes('robot') ||
       sample.includes('captcha'))
   )
+}
+
+const extractXmlCandidate = (value: string): string | undefined => {
+  const patterns = [
+    /<\?xml[\s\S]*?<rss[\s\S]*?<\/rss>/i,
+    /<\?xml[\s\S]*?<feed[\s\S]*?<\/feed>/i,
+    /<\?xml[\s\S]*?<rdf:RDF[\s\S]*?<\/rdf:RDF>/i,
+    /<rss[\s\S]*?<\/rss>/i,
+    /<feed[\s\S]*?<\/feed>/i,
+    /<rdf:RDF[\s\S]*?<\/rdf:RDF>/i,
+  ]
+
+  for (const pattern of patterns) {
+    const match = value.match(pattern)
+    if (match?.[0]) {
+      return match[0].trim()
+    }
+  }
+
+  return undefined
+}
+
+const recoverXmlFromResponseBody = (body: string): string | undefined => {
+  const directMatch = extractXmlCandidate(body)
+  if (directMatch) return directMatch
+
+  const decodedBody = decodeHtmlEntities(body, 3)
+  const decodedMatch = extractXmlCandidate(decodedBody)
+  if (decodedMatch) return decodedMatch
+
+  return undefined
+}
+
+const extractPreContent = (html: string): string | undefined => {
+  const match = html.match(/<pre\b[^>]*>([\s\S]*?)<\/pre>/i)
+  if (!match?.[1]) return undefined
+  return match[1].trim()
 }
 
 const extractAnchorLinks = (html: string): Array<{ href: string; text: string }> => {
@@ -236,10 +283,111 @@ export const stripHtml = (html: string): string => {
     .trim()
 }
 
-export const fetchText = async (url: string, timeoutMs = 15000): Promise<string> => {
+const fetchTextViaFirecrawl = async (args: {
+  firecrawlHost: string
+  firecrawlToken?: string
+  timeoutMs: number
+  url: string
+  xml: boolean
+}): Promise<string> => {
+  const { firecrawlHost, firecrawlToken, timeoutMs, url, xml } = args
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+  const endpoint = `${firecrawlHost.replace(/\/$/, '')}/v2/scrape`
+  const headers: Record<string, string> = {
+    'content-type': 'application/json',
+  }
+
+  if (firecrawlToken) {
+    headers.authorization = `Bearer ${firecrawlToken}`
+  }
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      signal: controller.signal,
+      headers,
+      body: JSON.stringify({
+        url,
+        formats: xml ? ['html', 'rawHtml'] : ['html'],
+        onlyMainContent: false,
+        timeout: timeoutMs,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${url} via Firecrawl: ${response.status} ${response.statusText}`)
+    }
+
+    const payload = (await response.json()) as {
+      success?: boolean
+      data?: {
+        html?: string
+        rawHtml?: string
+        markdown?: string
+        metadata?: {
+          error?: string
+          contentType?: string
+        }
+      }
+    }
+
+    if (payload.success === false) {
+      throw new Error(payload.data?.metadata?.error || `Failed to fetch ${url} via Firecrawl`)
+    }
+
+    const body =
+      trimToUndefined(payload.data?.rawHtml) ||
+      trimToUndefined(payload.data?.html) ||
+      trimToUndefined(payload.data?.markdown)
+
+    if (!body) {
+      throw new Error(`Firecrawl did not return content for ${url}`)
+    }
+
+    if (xml) {
+      const preContent = extractPreContent(body)
+      if (preContent) {
+        const recoveredFromPre = recoverXmlFromResponseBody(preContent)
+        if (recoveredFromPre) {
+          return recoveredFromPre
+        }
+      }
+
+      const metadataContentType = payload.data?.metadata?.contentType?.toLowerCase()
+      if (metadataContentType?.includes('xml') || metadataContentType?.includes('atom')) {
+        const recoveredXml = recoverXmlFromResponseBody(body)
+        if (recoveredXml) {
+          return recoveredXml
+        }
+      }
+    }
+
+    return body
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+export const fetchText = async (
+  url: string,
+  timeoutMs = 15000,
+  firecrawl?: FirecrawlSettings,
+): Promise<string> => {
   const minDelay = readEnvSeconds('RSS_FETCH_JITTER_MIN_SECONDS', 1)
   const maxDelay = readEnvSeconds('RSS_FETCH_JITTER_MAX_SECONDS', 10)
   await sleep(randomDelayMs(minDelay, maxDelay))
+
+  const firecrawlHost = trimToUndefined(firecrawl?.host)
+  if (firecrawlHost) {
+    return fetchTextViaFirecrawl({
+      firecrawlHost,
+      firecrawlToken: trimToUndefined(firecrawl?.token),
+      timeoutMs,
+      url,
+      xml: false,
+    })
+  }
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
@@ -263,10 +411,40 @@ export const fetchText = async (url: string, timeoutMs = 15000): Promise<string>
   }
 }
 
-export const fetchXmlText = async (url: string, timeoutMs = 15000): Promise<string> => {
+export const fetchXmlText = async (
+  url: string,
+  timeoutMs = 15000,
+  firecrawl?: FirecrawlSettings,
+): Promise<string> => {
   const minDelay = readEnvSeconds('RSS_FETCH_JITTER_MIN_SECONDS', 1)
   const maxDelay = readEnvSeconds('RSS_FETCH_JITTER_MAX_SECONDS', 10)
   await sleep(randomDelayMs(minDelay, maxDelay))
+
+  const firecrawlHost = trimToUndefined(firecrawl?.host)
+  if (firecrawlHost) {
+    const body = await fetchTextViaFirecrawl({
+      firecrawlHost,
+      firecrawlToken: trimToUndefined(firecrawl?.token),
+      timeoutMs,
+      url,
+      xml: true,
+    })
+
+    const recoveredXml = recoverXmlFromResponseBody(body)
+    if (recoveredXml) {
+      return recoveredXml
+    }
+
+    if (looksLikeRedditBlockPage(body)) {
+      throw new Error('Expected XML feed but received a Reddit block/challenge page')
+    }
+
+    if (looksLikeHtmlDocument(body)) {
+      throw new Error('Expected XML feed but received HTML content')
+    }
+
+    return body
+  }
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
@@ -286,6 +464,11 @@ export const fetchXmlText = async (url: string, timeoutMs = 15000): Promise<stri
 
     const contentType = response.headers.get('content-type')
     const body = await response.text()
+    const recoveredXml = recoverXmlFromResponseBody(body)
+
+    if (recoveredXml) {
+      return recoveredXml
+    }
 
     if (!isXmlContentType(contentType)) {
       if (looksLikeRedditBlockPage(body)) {
@@ -377,14 +560,18 @@ export const parseFeedItems = (xml: string): FeedItem[] => {
   return []
 }
 
-export const fetchFeedItems = async (url: string): Promise<FeedItem[]> => {
-  const xml = await fetchXmlText(url)
+export const fetchFeedItems = async (url: string, firecrawl?: FirecrawlSettings): Promise<FeedItem[]> => {
+  const xml = await fetchXmlText(url, 15000, firecrawl)
   return parseFeedItems(xml)
 }
 
-export const fetchLinkText = async (url: string, timeoutMs = 15000): Promise<string | null> => {
+export const fetchLinkText = async (
+  url: string,
+  timeoutMs = 15000,
+  firecrawl?: FirecrawlSettings,
+): Promise<string | null> => {
   try {
-    const html = await fetchText(url, timeoutMs)
+    const html = await fetchText(url, timeoutMs, firecrawl)
     return stripHtml(html)
   } catch {
     return null

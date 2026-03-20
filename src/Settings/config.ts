@@ -4,7 +4,7 @@ import { authenticated } from '@/access/authenticated'
 
 export const Settings: GlobalConfig = {
   slug: 'settings',
-  label: 'Notification Settings',
+  label: 'Settings',
   admin: {
     group: 'Settings',
   },
@@ -13,6 +13,55 @@ export const Settings: GlobalConfig = {
     update: authenticated,
   },
   fields: [
+    {
+      name: 'modelSettings',
+      label: 'Model Settings',
+      type: 'group',
+      fields: [
+        {
+          name: 'defaultModel',
+          label: 'Default model',
+          type: 'text',
+          admin: {
+            description:
+              'Used when an automation does not set its own model. Falls back to the MODEL_NAME env var, then gpt-5-nano.',
+          },
+        },
+        {
+          name: 'systemPrompt',
+          label: 'System prompt',
+          type: 'textarea',
+          admin: {
+            description:
+              'Additional system instructions prepended before the evaluation prompt. If empty, defaults to YES/NO behavior including skipping announcement and moderator posts.',
+          },
+        },
+      ],
+    },
+    {
+      name: 'firecrawl',
+      label: 'Firecrawl',
+      type: 'group',
+      fields: [
+        {
+              name: 'host',
+              label: 'Host',
+              type: 'text',
+              admin: {
+                description:
+                  'Optional Firecrawl base URL used for RSS retrieval, for example https://api.firecrawl.dev or http://localhost:3001.',
+              },
+            },
+        {
+          name: 'token',
+          label: 'Token',
+          type: 'text',
+          admin: {
+            description: 'Optional Firecrawl auth token. Leave blank for self-hosted instances that do not require one.',
+          },
+        },
+      ],
+    },
     {
       name: 'notifications',
       type: 'group',

@@ -145,6 +145,17 @@ const runModelCheck = async (args: {
   }
 }
 
+type ProcessingSettings = {
+  modelSettings?: {
+    defaultModel?: string | null
+    systemPrompt?: string | null
+  } | null
+  firecrawl?: {
+    host?: string | null
+    token?: string | null
+  } | null
+} | null
+
 const serializeRawData = (raw: unknown, limit = MAX_MODEL_RAW_CHARS): string | null => {
   if (!raw) return null
   try {
@@ -233,7 +244,11 @@ type FeedItemWithFlags = Awaited<ReturnType<typeof fetchFeedItems>>[number] & {
 
 type HistoryCheck = NonNullable<AutomationHistory['checks']>[number]
 
-const expandItemsForAutomation = async (item: FeedItemWithFlags, rules: Record<string, unknown> | null) => {
+const expandItemsForAutomation = async (
+  item: FeedItemWithFlags,
+  rules: Record<string, unknown> | null,
+  processingSettings?: ProcessingSettings,
+) => {
   const followPostRss = Boolean(rules?.followPostRss)
   const processComments = Boolean(rules?.processComments)
 
@@ -242,7 +257,7 @@ const expandItemsForAutomation = async (item: FeedItemWithFlags, rules: Record<s
   const cleanedLink = item.link.replace(/\/+$/, '')
   const rssUrl = cleanedLink.endsWith('.rss') ? cleanedLink : `${cleanedLink}.rss`
   try {
-    const commentItems = await fetchFeedItems(rssUrl)
+    const commentItems = await fetchFeedItems(rssUrl, processingSettings?.firecrawl ?? undefined)
     const parentKey = item.commentsLink || item.link || item.id
     const parentTitle = item.title
     const parentContent = item.content
@@ -544,7 +559,7 @@ export const processFeedsTask: TaskConfig = {
         req,
       }),
       req.payload.findGlobal({
-        slug: 'model-settings',
+        slug: 'settings',
         depth: 0,
         req,
       }),
@@ -552,8 +567,9 @@ export const processFeedsTask: TaskConfig = {
 
     const feeds = feedsResult.docs as RssFeed[]
     const automations = automationsResult.docs as FeedAutomation[]
-    const settingsModel = settingsResult?.defaultModel
-    const settingsSystemPrompt = settingsResult?.systemPrompt
+    const processingSettings = settingsResult as ProcessingSettings
+    const settingsModel = processingSettings?.modelSettings?.defaultModel
+    const settingsSystemPrompt = processingSettings?.modelSettings?.systemPrompt
 
     if (debug) {
       req.payload.logger.info(
@@ -570,7 +586,7 @@ export const processFeedsTask: TaskConfig = {
 
       try {
         logTiming(`process-feeds debug: fetching feed "${feed.name}" (${feed.url})`)
-        items = await fetchFeedItems(feed.url)
+        items = await fetchFeedItems(feed.url, processingSettings?.firecrawl ?? undefined)
         logTiming(
           `process-feeds debug: fetched feed "${feed.name}" items=${items.length} elapsedMs=${Date.now() - fetchStartedAt}`,
         )
@@ -602,7 +618,11 @@ export const processFeedsTask: TaskConfig = {
                   debugKey,
                   `process-feeds debug: expanding item "${item.title || 'untitled'}" for automation "${automation.name}"`,
                 )
-                const expandedItems = await expandItemsForAutomation(item as FeedItemWithFlags, rules)
+                const expandedItems = await expandItemsForAutomation(
+                  item as FeedItemWithFlags,
+                  rules,
+                  processingSettings,
+                )
                 logDebug(
                   debugKey,
                   `process-feeds debug: expanded item "${item.title || 'untitled'}" count=${expandedItems.length} elapsedMs=${Date.now() - expandStartedAt}`,

@@ -74,10 +74,12 @@ Admin users (auth collection). Used for login and access control. Managed under 
 
 ## Globals
 
-### Notification Settings (`settings`)
+### Settings (`settings`)
 
-Configure how notifications are delivered.
+Configure feed processing and notification delivery.
 
+- **Model Settings** – Default model and system prompt used when an automation does not override them.
+- **Firecrawl** – Optional host/token for RSS retrieval. If Firecrawl is not configured, rssnotify keeps using the existing direct fetch approach. Leave the token blank for self-hosted instances that do not require authentication.
 - **Email** – Enabled, From Name, From Email, Reply-To, Recipients (list of addresses). Used with SMTP (e.g. Nodemailer); ensure your deployment has SMTP env vars configured if you use email.
 - **Ntfy** – Enabled, Server URL (e.g. `https://ntfy.sh`), Auth Token (optional), Channels (list of topics).
 
