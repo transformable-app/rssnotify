@@ -16,6 +16,7 @@ const MAX_MODEL_COMMENT_COUNT = 20
 const DEFAULT_PROCESS_FEEDS_CRON = '0 * * * * *'
 const DEFAULT_PROCESS_FEEDS_MIN_DELAY_SECONDS = 12 * 60
 const DEFAULT_PROCESS_FEEDS_MAX_DELAY_SECONDS = 16 * 60 + 59
+const DEFAULT_MODEL_TIMEOUT_MS = 15000
 const IGNORE_RETRY_DELAYS_MS = [
   24 * 60 * 60 * 1000,
   48 * 60 * 60 * 1000,
@@ -66,16 +67,21 @@ const runModelCheck = async (args: {
   const modelName = automationModel || configuredModel || process.env.MODEL_NAME || DEFAULT_MODEL_NAME
   const debugFeeds = process.env.DEBUG_FEEDS === 'true'
   const debugPreviewChars = 1000
+  const timeoutMs = parseDelaySeconds(process.env.OPENAI_TIMEOUT_MS, DEFAULT_MODEL_TIMEOUT_MS)
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+  const startedAt = Date.now()
 
   if (debugFeeds) {
     console.log(
-      `[process-feeds debug] OpenAI request: endpoint=${endpoint} model=${modelName} contentChars=${content.length}`,
+      `[process-feeds debug] OpenAI request: endpoint=${endpoint} model=${modelName} contentChars=${content.length} timeoutMs=${timeoutMs}`,
     )
   }
 
   try {
     const response = await fetch(endpoint, {
       method: 'POST',
+      signal: controller.signal,
       headers: {
         'content-type': 'application/json',
         authorization: `Bearer ${apiKey}`,
@@ -103,7 +109,7 @@ const runModelCheck = async (args: {
           ? `${rawResponse.slice(0, debugPreviewChars)}...`
           : rawResponse
       console.log(
-        `[process-feeds debug] OpenAI response: status=${response.status} ok=${response.ok} body=${preview}`,
+        `[process-feeds debug] OpenAI response: status=${response.status} ok=${response.ok} elapsedMs=${Date.now() - startedAt} body=${preview}`,
       )
     }
 
@@ -130,10 +136,12 @@ const runModelCheck = async (args: {
   } catch (error) {
     if (debugFeeds) {
       console.log(
-        `[process-feeds debug] OpenAI request failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `[process-feeds debug] OpenAI request failed after ${Date.now() - startedAt}ms: ${error instanceof Error ? error.message : 'Unknown error'}`,
       )
     }
     return false
+  } finally {
+    clearTimeout(timeout)
   }
 }
 
@@ -507,6 +515,11 @@ export const processFeedsTask: TaskConfig = {
       req.payload.logger.info(message)
     }
 
+    const logTiming = (message: string) => {
+      if (!debug) return
+      req.payload.logger.info(message)
+    }
+
     const summary = {
       feedsProcessed: 0,
       itemsFetched: 0,
@@ -553,10 +566,18 @@ export const processFeedsTask: TaskConfig = {
       if (!feedAutomations.length) continue
 
       let items = [] as Awaited<ReturnType<typeof fetchFeedItems>>
+      const fetchStartedAt = Date.now()
 
       try {
+        logTiming(`process-feeds debug: fetching feed "${feed.name}" (${feed.url})`)
         items = await fetchFeedItems(feed.url)
+        logTiming(
+          `process-feeds debug: fetched feed "${feed.name}" items=${items.length} elapsedMs=${Date.now() - fetchStartedAt}`,
+        )
       } catch (error) {
+        logTiming(
+          `process-feeds debug: feed fetch failed for "${feed.name}" elapsedMs=${Date.now() - fetchStartedAt} error=${error instanceof Error ? error.message : 'Unknown error'}`,
+        )
         summary.errors.push(`Feed ${feed.url}: ${error instanceof Error ? error.message : 'Unknown error'}`)
         continue
       }
@@ -575,7 +596,19 @@ export const processFeedsTask: TaskConfig = {
           const itemsToProcess =
             automation.type === 'rss'
               ? [item as FeedItemWithFlags]
-              : await expandItemsForAutomation(item as FeedItemWithFlags, rules)
+              : await (async () => {
+                const expandStartedAt = Date.now()
+                logDebug(
+                  debugKey,
+                  `process-feeds debug: expanding item "${item.title || 'untitled'}" for automation "${automation.name}"`,
+                )
+                const expandedItems = await expandItemsForAutomation(item as FeedItemWithFlags, rules)
+                logDebug(
+                  debugKey,
+                  `process-feeds debug: expanded item "${item.title || 'untitled'}" count=${expandedItems.length} elapsedMs=${Date.now() - expandStartedAt}`,
+                )
+                return expandedItems
+              })()
 
           const commentItems = itemsToProcess.filter((entry) => entry.__isComment)
           const parentItemForComments =
@@ -589,6 +622,11 @@ export const processFeedsTask: TaskConfig = {
               parentItem: parentItemForComments,
               commentItems,
             })
+            const modelStartedAt = Date.now()
+            logDebug(
+              debugKey,
+              `process-feeds debug: running batch model check for "${parentItemForComments.title || 'untitled'}"`,
+            )
             commentModelDecision = await runModelCheck({
               content: batchContent,
               model: typeof rules?.model === 'string' ? rules.model : undefined,
@@ -599,7 +637,7 @@ export const processFeedsTask: TaskConfig = {
 
             logDebug(
               debugKey,
-              `process-feeds debug: batch model decision for "${parentItemForComments.title || 'untitled'}" => ${commentModelDecision}`,
+              `process-feeds debug: batch model decision for "${parentItemForComments.title || 'untitled'}" => ${commentModelDecision} elapsedMs=${Date.now() - modelStartedAt}`,
             )
           }
 
@@ -623,12 +661,17 @@ export const processFeedsTask: TaskConfig = {
             const parentKey = targetItem.__parentKey
             if (isRedditComment && parentKey) {
               if (!parentNotified.has(parentKey)) {
+                const parentHistoryStartedAt = Date.now()
                 const parentHistory = await getHistoryEntry({
                   req,
                   automationId: automation.id,
                   sourceURL: parentKey,
                   title: targetItem.__parentTitle || undefined,
                 })
+                logDebug(
+                  debugKey,
+                  `process-feeds debug: parent history lookup for "${targetItem.__parentTitle || 'untitled'}" elapsedMs=${Date.now() - parentHistoryStartedAt}`,
+                )
 
                 if (parentHistory?.status === 'notified') {
                   parentNotified.set(parentKey, true)
@@ -647,12 +690,17 @@ export const processFeedsTask: TaskConfig = {
               ? targetItem.commentsLink || targetItem.link
               : targetItem.link
 
+            const historyStartedAt = Date.now()
             const existingHistory = await getHistoryEntry({
               req,
               automationId: automation.id,
               sourceURL: sourceURL || undefined,
               title: targetItem.title || undefined,
             })
+            logDebug(
+              debugKey,
+              `process-feeds debug: history lookup for "${targetItem.title || 'untitled'}" elapsedMs=${Date.now() - historyStartedAt}`,
+            )
 
             const skipBecauseOfHistory = shouldSkipHistory(existingHistory, new Date())
 
@@ -669,13 +717,25 @@ export const processFeedsTask: TaskConfig = {
 
             const modelOk = notifyEveryPost
               ? true
-              : commentModelDecision ?? (await runModelCheck({
-                content: modelContent,
-                model: typeof rules?.model === 'string' ? rules.model : undefined,
-                prompt: typeof rules?.modelPrompt === 'string' ? rules.modelPrompt : undefined,
-                defaultModel: settingsModel,
-                defaultSystemPrompt: settingsSystemPrompt,
-              }))
+              : commentModelDecision ?? (await (async () => {
+                const modelStartedAt = Date.now()
+                logDebug(
+                  debugKey,
+                  `process-feeds debug: running model check for "${targetItem.title || 'untitled'}"`,
+                )
+                const result = await runModelCheck({
+                  content: modelContent,
+                  model: typeof rules?.model === 'string' ? rules.model : undefined,
+                  prompt: typeof rules?.modelPrompt === 'string' ? rules.modelPrompt : undefined,
+                  defaultModel: settingsModel,
+                  defaultSystemPrompt: settingsSystemPrompt,
+                })
+                logDebug(
+                  debugKey,
+                  `process-feeds debug: finished model check for "${targetItem.title || 'untitled'}" elapsedMs=${Date.now() - modelStartedAt}`,
+                )
+                return result
+              })())
 
             if (!notifyEveryPost && commentModelDecision === null) {
               logDebug(
