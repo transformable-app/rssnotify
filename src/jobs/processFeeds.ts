@@ -292,6 +292,7 @@ const getHistoryEntry = async (args: {
     where: { itemKey: { equals: itemKey } } as Where,
     limit: 1,
     depth: 0,
+    overrideAccess: true,
     req,
   })
 
@@ -450,6 +451,7 @@ const upsertHistory = async (args: {
       id: history.id,
       data: payloadData,
       draft: false,
+      overrideAccess: true,
       req,
     }) as AutomationHistory
   }
@@ -458,6 +460,7 @@ const upsertHistory = async (args: {
     collection: 'automation-history',
     data: payloadData,
     draft: false,
+    overrideAccess: true,
     req,
   }) as AutomationHistory
 }
@@ -549,6 +552,7 @@ export const processFeedsTask: TaskConfig = {
         where: { enabled: { equals: true } },
         limit: 0,
         depth: 0,
+        overrideAccess: true,
         req,
       }),
       req.payload.find({
@@ -556,11 +560,13 @@ export const processFeedsTask: TaskConfig = {
         where: { enabled: { equals: true } },
         limit: 0,
         depth: 0,
+        overrideAccess: true,
         req,
       }),
       req.payload.findGlobal({
         slug: 'settings',
         depth: 0,
+        overrideAccess: true,
         req,
       }),
     ])
@@ -822,6 +828,7 @@ export const processFeedsTask: TaskConfig = {
                 title: notificationPayload.title ?? 'Feed match',
               } as unknown as Omit<Notification, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>,
               draft: false,
+              overrideAccess: true,
               req,
             })
 
