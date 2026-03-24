@@ -13,7 +13,7 @@ const MAX_ITEMS_PER_FEED = 25
 const MAX_MODEL_RAW_CHARS = 2000
 const MAX_MODEL_COMMENT_CHARS = 800
 const MAX_MODEL_COMMENT_COUNT = 20
-const DEFAULT_PROCESS_FEEDS_CRON = '0 * * * * *'
+const DEFAULT_PROCESS_FEEDS_CRON = '0 */15 * * * *'
 const DEFAULT_PROCESS_FEEDS_MIN_DELAY_SECONDS = 12 * 60
 const DEFAULT_PROCESS_FEEDS_MAX_DELAY_SECONDS = 16 * 60 + 59
 const DEFAULT_MODEL_TIMEOUT_MS = 15000
@@ -299,6 +299,13 @@ const getHistoryEntry = async (args: {
   return (existing.docs[0] as AutomationHistory | undefined) || null
 }
 
+const isLikelyItemKeyConflict = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false
+
+  const message = error.message.toLowerCase()
+  return message.includes('itemkey') || message.includes('duplicate key') || message.includes('unique')
+}
+
 const getRetryDate = (baseDate: Date, retryNumber: number): Date | null => {
   const delay = IGNORE_RETRY_DELAYS_MS[retryNumber]
   if (!delay) return null
@@ -456,13 +463,35 @@ const upsertHistory = async (args: {
     }) as AutomationHistory
   }
 
-  return await req.payload.create({
-    collection: 'automation-history',
-    data: payloadData,
-    draft: false,
-    overrideAccess: true,
-    req,
-  }) as AutomationHistory
+  try {
+    return await req.payload.create({
+      collection: 'automation-history',
+      data: payloadData,
+      draft: false,
+      overrideAccess: true,
+      req,
+    }) as AutomationHistory
+  } catch (error) {
+    // Scheduled jobs can overlap and race on the unique itemKey. If another task
+    // created the history row after our initial lookup, re-read it and update it.
+    if (isLikelyItemKeyConflict(error)) {
+      const conflictingHistory = await getHistoryEntry({
+        req,
+        automationId: automation.id,
+        sourceURL,
+        title,
+      })
+
+      if (conflictingHistory?.id) {
+        return await upsertHistory({
+          ...args,
+          history: conflictingHistory,
+        })
+      }
+    }
+
+    throw error
+  }
 }
 
 const buildNotificationPayload = (args: {

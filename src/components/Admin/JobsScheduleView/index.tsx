@@ -23,8 +23,8 @@ const JobsScheduleView: React.FC = () => {
                 of about 12 to 16 minutes.
               </p>
               <p>
-                It is checked every minute, and checks that happen before the next eligible run are skipped as
-                throttled.
+                The default cron is aligned to every 15 minutes so the queue does not fill with redundant throttled
+                runs.
               </p>
             </div>
             <JobsResetButton />
