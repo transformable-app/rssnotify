@@ -1,6 +1,7 @@
 import type { GlobalConfig } from 'payload'
 
 import { authenticated } from '@/access/authenticated'
+import { DEFAULT_MODEL_BASE_PROMPT, DEFAULT_MODEL_NAME } from '@/constants/modelDefaults'
 
 export const Settings: GlobalConfig = {
   slug: 'settings',
@@ -25,6 +26,7 @@ export const Settings: GlobalConfig = {
           admin: {
             description:
               'Used when an automation does not set its own model. Falls back to the MODEL_NAME env var, then gpt-5-nano.',
+            placeholder: DEFAULT_MODEL_NAME,
           },
         },
         {
@@ -33,7 +35,8 @@ export const Settings: GlobalConfig = {
           type: 'textarea',
           admin: {
             description:
-              'Additional system instructions prepended before the evaluation prompt. If empty, defaults to YES/NO behavior including skipping announcement and moderator posts.',
+              'Additional system instructions prepended before the evaluation prompt.',
+            placeholder: DEFAULT_MODEL_BASE_PROMPT,
           },
         },
       ],

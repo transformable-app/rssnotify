@@ -730,7 +730,7 @@ export interface Setting {
      */
     defaultModel?: string | null;
     /**
-     * Additional system instructions prepended before the evaluation prompt. If empty, defaults to YES/NO behavior including skipping announcement and moderator posts.
+     * Additional system instructions prepended before the evaluation prompt.
      */
     systemPrompt?: string | null;
   };
