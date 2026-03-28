@@ -12,6 +12,7 @@ overrides:
   undici: '>=7.24.0'
   flatted: '>=3.4.2'
   picomatch: '>=4.0.4'
+  brace-expansion: 5.0.5
   yaml: '>=1.10.3'
   payload>ajv: '>=8.18.0'
   dompurify: https://codeload.github.com/cure53/DOMPurify/tar.gz/729097f63a78e3e0e9f771e648f462bee100e78f
@@ -130,8 +131,8 @@ importers:
         specifier: 15.5.14
         version: 15.5.14(@babel/core@7.28.5)(@playwright/test@1.58.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sass@1.77.4)
       nodemailer:
-        specifier: 7.0.12
-        version: 7.0.12
+        specifier: 8.0.4
+        version: 8.0.4
       payload:
         specifier: 3.77.0
         version: 3.77.0(graphql@16.13.0)(typescript@5.7.3)
@@ -2353,9 +2354,9 @@ packages:
   body-scroll-lock@4.0.0-beta.0:
     resolution: {integrity: sha512-a7tP5+0Mw3YlUJcGAKUqIBkYYGlYxk2fnCasq/FUph1hadxlTRjF+gAcZksxANnaMnALjxEddmSi/H3OR8ugcQ==}
 
-  brace-expansion@5.0.2:
-    resolution: {integrity: sha512-Pdk8c9poy+YhOgVWw1JNN22/HcivgKWwpxKq04M/jTmHyCZn12WPJebZxdjSa5TmBqISrUSgNYU3eRORljfCCw==}
-    engines: {node: 20 || >=22}
+  brace-expansion@5.0.5:
+    resolution: {integrity: sha512-VZznLgtwhn+Mact9tfiwx64fA9erHH/MCXEUfB/0bX/6Fz6ny5EGTXYltMocqg4xFAQZtnO3DHWWXi8RiuN7cQ==}
+    engines: {node: 18 || 20 || >=22}
 
   braces@3.0.3:
     resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
@@ -3659,6 +3660,10 @@ packages:
 
   nodemailer@7.0.12:
     resolution: {integrity: sha512-H+rnK5bX2Pi/6ms3sN4/jRQvYSMltV6vqup/0SFOrxYYY/qoNvhXPlYq3e+Pm9RFJRwrMGbMIwi81M4dxpomhA==}
+    engines: {node: '>=6.0.0'}
+
+  nodemailer@8.0.4:
+    resolution: {integrity: sha512-k+jf6N8PfQJ0Fe8ZhJlgqU5qJU44Lpvp2yvidH3vp1lPnVQMgi4yEEMPXg5eJS1gFIJTVq1NHBk7Ia9ARdSBdQ==}
     engines: {node: '>=6.0.0'}
 
   noms@0.0.0:
@@ -6980,7 +6985,7 @@ snapshots:
 
   body-scroll-lock@4.0.0-beta.0: {}
 
-  brace-expansion@5.0.2:
+  brace-expansion@5.0.5:
     dependencies:
       balanced-match: 4.0.3
 
@@ -8460,7 +8465,7 @@ snapshots:
 
   minimatch@10.2.4:
     dependencies:
-      brace-expansion: 5.0.2
+      brace-expansion: 5.0.5
 
   minimist@1.2.8: {}
 
@@ -8553,6 +8558,8 @@ snapshots:
   node-releases@2.0.27: {}
 
   nodemailer@7.0.12: {}
+
+  nodemailer@8.0.4: {}
 
   noms@0.0.0:
     dependencies:
