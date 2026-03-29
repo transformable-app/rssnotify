@@ -95,6 +95,67 @@ const normalizeMediaUrl = (value: unknown): string | undefined => {
   return undefined
 }
 
+const extractTitleFromHtml = (html: string): string | undefined => {
+  const titleMatch = html.match(/<img\b[^>]*\btitle=["']([^"']+)["'][^>]*>/i)
+  if (titleMatch?.[1]) {
+    return trimToUndefined(decodeHtmlEntities(titleMatch[1]))
+  }
+
+  const altMatch = html.match(/<img\b[^>]*\balt=["']([^"']+)["'][^>]*>/i)
+  if (altMatch?.[1]) {
+    return trimToUndefined(decodeHtmlEntities(altMatch[1]))
+  }
+
+  return undefined
+}
+
+const extractTitleFromStructuredContent = (value: unknown, depth = 0): string | undefined => {
+  if (!value || depth > 8) return undefined
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const candidate = extractTitleFromStructuredContent(entry, depth + 1)
+      if (candidate) return candidate
+    }
+    return undefined
+  }
+
+  if (typeof value !== 'object') return undefined
+
+  const record = value as Record<string, unknown>
+  const directTitle = trimToUndefined(normalizeText(record.title))
+  if (directTitle) return directTitle
+
+  const imageAlt = trimToUndefined(normalizeText(record.alt))
+  if (imageAlt && ('src' in record || 'title' in record)) return imageAlt
+
+  const traversalKeys = ['content', 'summary', 'table', 'tr', 'td', 'div', 'a', 'p', 'span', 'img', 'figure']
+
+  for (const key of traversalKeys) {
+    if (!(key in record)) continue
+    const candidate = extractTitleFromStructuredContent(record[key], depth + 1)
+    if (candidate) return candidate
+  }
+
+  return undefined
+}
+
+const resolveAtomEntryTitle = (entry: Record<string, unknown>): string | undefined => {
+  const directTitle = trimToUndefined(normalizeText(entry.title))
+  if (directTitle) return directTitle
+
+  const structuredTitle =
+    extractTitleFromStructuredContent(entry.content) ?? extractTitleFromStructuredContent(entry.summary)
+  if (structuredTitle) return structuredTitle
+
+  const htmlContent = trimToUndefined(normalizeText(entry.content) ?? normalizeText(entry.summary))
+  if (htmlContent) {
+    return extractTitleFromHtml(decodeHtmlEntities(htmlContent, 2))
+  }
+
+  return undefined
+}
+
 const decodeHtmlEntitiesOnce = (value: string): string => {
   return value.replace(/&(#\d+|#x[0-9a-fA-F]+|[a-zA-Z]+);/g, (match, entity) => {
     if (entity.startsWith('#x') || entity.startsWith('#X')) {
@@ -520,7 +581,7 @@ export const parseFeedItems = (xml: string): FeedItem[] => {
   if (parsed?.feed?.entry) {
     const entries = toArray(parsed.feed.entry)
     return entries.map((entry: Record<string, unknown>): FeedItem => {
-      const title = normalizeText(entry.title)
+      const title = resolveAtomEntryTitle(entry)
       const entryId = normalizeText(entry.id)
       const atomLink = selectAtomLink(entry.link)
       const contentRaw = normalizeText(entry.content) ?? normalizeText(entry.summary)
