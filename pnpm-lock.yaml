@@ -18,6 +18,7 @@ overrides:
   payload>ajv: '>=8.18.0'
   dompurify: https://codeload.github.com/cure53/DOMPurify/tar.gz/729097f63a78e3e0e9f771e648f462bee100e78f
   immutable: '>=4.3.8'
+  lodash: '>=4.18.0'
 
 importers:
 
@@ -3433,8 +3434,8 @@ packages:
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
 
-  lodash@4.17.23:
-    resolution: {integrity: sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==}
+  lodash@4.18.1:
+    resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
   longest-streak@3.1.0:
     resolution: {integrity: sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g==}
@@ -8205,7 +8206,7 @@ snapshots:
       '@types/lodash': 4.17.23
       is-glob: 4.0.3
       js-yaml: 4.1.1
-      lodash: 4.17.23
+      lodash: 4.18.1
       minimist: 1.2.8
       prettier: 3.8.1
       tinyglobby: 0.2.15
@@ -8266,7 +8267,7 @@ snapshots:
 
   lodash.merge@4.6.2: {}
 
-  lodash@4.17.23: {}
+  lodash@4.18.1: {}
 
   longest-streak@3.1.0: {}
 
