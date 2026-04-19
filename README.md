@@ -12,6 +12,20 @@ Built with [Payload CMS](https://payloadcms.com)
 - **Scheduled jobs** – Process feeds and deliver notifications on a cron schedule.
 - **Notification delivery** – Email (SMTP) and/or ntfy; configurable in Settings.
 
+## Screenshots
+
+| Dashboard | RSS Feeds |
+| --- | --- |
+| ![Dashboard view](docs/rssnotify-dashboard.png) | ![RSS feeds view](docs/rssnotify-rssfeeds.png) |
+
+| Feed Automations | Create Automation |
+| --- | --- |
+| ![Feed automations view](docs/rssnotify-automations.png) | ![Create automation view](docs/rssnotify-createautomation.png) |
+
+| Notifications | Settings |
+| --- | --- |
+| ![Notifications view](docs/rssnotify-notifications.png) | ![Settings view](docs/rssnotify-settings.png) |
+
 ## Quick Start
 
 1. Clone the repo and create a `.env` in the project root. Set at least:
