@@ -3,7 +3,7 @@
  * Source: https://github.com/NaturalIntelligence/strnum
  */
 const hexRegex = /^[-+]?0x[a-fA-F0-9]+$/
-const numRegex = /^([\-\+])?(0*)([0-9]*(\.[0-9]*)?)$/
+const numRegex = /^([+-])?(0*)([0-9]*(\.[0-9]*)?)$/
 
 const consider = {
   hex: true,
@@ -63,7 +63,7 @@ export default function toNumber(str, options = {}) {
   return str
 }
 
-const eNotationRegx = /^([-+])?(0*)(\d*(\.\d*)?[eE][-\+]?\d+)$/
+const eNotationRegx = /^([+-])?(0*)(\d*(\.\d*)?[eE][+-]?\d+)$/
 function resolveEnotation(str, trimmedStr, options) {
   if (!options.eNotation) return str
   const notation = trimmedStr.match(eNotationRegx)
