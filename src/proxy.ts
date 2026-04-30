@@ -15,7 +15,7 @@ function shouldBypass(pathname: string): boolean {
   return /\.[^/]+$/.test(pathname)
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   if (shouldBypass(request.nextUrl.pathname)) {
     return NextResponse.next()
   }

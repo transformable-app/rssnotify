@@ -1132,6 +1132,12 @@ For deeper exploration of specific topics, refer to the context files located in
     - Performance best practices
     - Styling components
 
+## Maintaining This File
+
+Agents may add or refine rules in this file when they discover durable project conventions, setup steps, or safety constraints that would help future work.
+Keep additions concise, project-specific, and grounded in observed code or user direction.
+Always mention any edits made to AGENTS.md in the final response.
+
 ## Resources
 
 - Docs: https://payloadcms.com/docs

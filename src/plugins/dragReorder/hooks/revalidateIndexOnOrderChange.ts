@@ -20,12 +20,12 @@ export const revalidateIndexOnOrderChange =
 
             // Revalidate sitemap tag (used by collection hooks)
             const sitemapTag = `${collectionSlug}-sitemap`
-            revalidateTag(sitemapTag)
+            revalidateTag(sitemapTag, 'max')
 
             payload.logger.info(
               `Revalidated cache for ${collectionSlug} index page: path=${indexPath}, tag=${sitemapTag}`
             )
-            
+
             // Mark that we've revalidated to prevent duplicate revalidations in the same batch
             context.skipIndexRevalidate = true
           } catch (err: unknown) {
@@ -37,4 +37,3 @@ export const revalidateIndexOnOrderChange =
 
     return doc
   }
-
