@@ -21,6 +21,7 @@ overrides:
   dompurify: https://codeload.github.com/cure53/DOMPurify/tar.gz/729097f63a78e3e0e9f771e648f462bee100e78f
   immutable: '>=4.3.8'
   lodash: '>=4.18.0'
+  mongoose: 8.22.1
 
 importers:
 
@@ -3662,8 +3663,8 @@ packages:
   mongodb-connection-string-url@3.0.2:
     resolution: {integrity: sha512-rMO7CGo/9BFwyZABcKAWL8UJwH/Kc2x0g72uhDWzG48URRax5TCIcJ7Rc3RZqffZzO/Gwff/jyKwCU9TN8gehA==}
 
-  mongodb@6.16.0:
-    resolution: {integrity: sha512-D1PNcdT0y4Grhou5Zi/qgipZOYeWrhLEpk33n3nm6LGtz61jvO88WlrWCK/bigMjpnOdAUKKQwsGIl0NtWMyYw==}
+  mongodb@6.20.0:
+    resolution: {integrity: sha512-Tl6MEIU3K4Rq3TSHd+sZQqRBoGlFsOgNrH5ltAcFBV62Re3Fd+FcaVf8uSEQFOJ51SDowDVttBTONMfoYWrWlQ==}
     engines: {node: '>=16.20.1'}
     peerDependencies:
       '@aws-sdk/credential-providers': ^3.188.0
@@ -3671,7 +3672,7 @@ packages:
       gcp-metadata: ^5.2.0
       kerberos: ^2.0.1
       mongodb-client-encryption: '>=6.0.0 <7'
-      snappy: ^7.2.2
+      snappy: ^7.3.2
       socks: ^2.7.1
     peerDependenciesMeta:
       '@aws-sdk/credential-providers':
@@ -3693,14 +3694,14 @@ packages:
     resolution: {integrity: sha512-8chOqpVE3bcoWT2pIgcJeIZlXaOfQCavZgQZF4qytUtjRBqsNMyzUoR16qdw9XL2kC478N8iA8z0AA+NSS0d1A==}
     engines: {node: '>=16.20.1'}
     peerDependencies:
-      mongoose: '>=5.11.10'
+      mongoose: 8.22.1
 
   mongoose-paginate-v2@1.9.4:
     resolution: {integrity: sha512-0LOsVEQmjrbJKVDi/IvFEhIezmuRjUE4loGgslv57j9nK/NMC+mbKT0QnaPSPpib4lByKVBcy3VbDa1TvlHZjA==}
     engines: {node: '>=4.0.0'}
 
-  mongoose@8.15.1:
-    resolution: {integrity: sha512-RhQ4DzmBi5BNGcS0w4u1vdMRIKcteXTCNzDt1j7XRcdWYBz1MjMjulBhPaeC5jBCHOD1yinuOFTTSOWLLGexWw==}
+  mongoose@8.22.1:
+    resolution: {integrity: sha512-c0bzt7ElI1CwWiyFSgg9bfhlFcblAoPwr+gmDcLCryClyKaeixWhP9KDGnr13kRPE8KPAuUN3ZZ3jSDxSPvoTg==}
     engines: {node: '>=16.20.1'}
 
   mpath@0.8.4:
@@ -5906,8 +5907,8 @@ snapshots:
 
   '@payloadcms/db-mongodb@3.84.1(payload@3.84.1(graphql@16.13.0)(typescript@5.7.3))':
     dependencies:
-      mongoose: 8.15.1
-      mongoose-paginate-v2: 1.9.4(mongoose@8.15.1)
+      mongoose: 8.22.1
+      mongoose-paginate-v2: 1.9.4(mongoose@8.22.1)
       payload: 3.84.1(graphql@16.13.0)(typescript@5.7.3)
       prompts: 2.4.2
       uuid: 14.0.0
@@ -8668,28 +8669,28 @@ snapshots:
       '@types/whatwg-url': 11.0.5
       whatwg-url: 14.2.0
 
-  mongodb@6.16.0:
+  mongodb@6.20.0:
     dependencies:
       '@mongodb-js/saslprep': 1.4.6
       bson: 6.10.4
       mongodb-connection-string-url: 3.0.2
 
-  mongoose-lean-virtuals@1.1.1(mongoose@8.15.1):
+  mongoose-lean-virtuals@1.1.1(mongoose@8.22.1):
     dependencies:
-      mongoose: 8.15.1
+      mongoose: 8.22.1
       mpath: 0.8.4
 
-  mongoose-paginate-v2@1.9.4(mongoose@8.15.1):
+  mongoose-paginate-v2@1.9.4(mongoose@8.22.1):
     dependencies:
-      mongoose-lean-virtuals: 1.1.1(mongoose@8.15.1)
+      mongoose-lean-virtuals: 1.1.1(mongoose@8.22.1)
     transitivePeerDependencies:
       - mongoose
 
-  mongoose@8.15.1:
+  mongoose@8.22.1:
     dependencies:
       bson: 6.10.4
       kareem: 2.6.3
-      mongodb: 6.16.0
+      mongodb: 6.20.0
       mpath: 0.9.0
       mquery: 5.0.0
       ms: 2.1.3
