@@ -1,6 +1,6 @@
 {
   "name": "rssnotify",
-  "version": "0.1.27",
+  "version": "0.1.28",
   "description": "RSS feed monitor that evaluates feed items with OpenAI compatibile models and delivers notifications via email and/or ntfy.",
   "license": "MIT",
   "source": "https://github.com/transformable-app/rssnotify",
@@ -113,6 +113,7 @@
     "overrides": {
       "file-type": ">=21.3.1",
       "fast-xml-parser": ">=5.7.0",
+      "fast-xml-builder": ">=1.1.7",
       "rollup": ">=4.59.0",
       "minimatch": ">=10.2.3",
       "undici": ">=7.24.0",
