@@ -9,6 +9,7 @@ Built with [Payload CMS](https://payloadcms.com)
 - **RSS Feeds** – Add Standard RSS, Reddit, or WordPress feed URLs; enable/disable per feed.
 - **Feed Automations** – Define rules per automation: optional OpenAI-based filtering, “notify every post,” and type-specific options (e.g. follow post RSS, process comments for Reddit/WordPress).
 - **Notifications** – View and manage generated alerts; delivery status (email / ntfy) and bulk actions in the admin.
+- **Digests** – Send scheduled email summaries of notifications, optionally summarized and prioritized with AI.
 - **Scheduled jobs** – Process feeds and deliver notifications on a cron schedule.
 - **Notification delivery** – Email (SMTP) and/or ntfy; configurable in Settings.
 
@@ -25,6 +26,10 @@ Built with [Payload CMS](https://payloadcms.com)
 | Notifications | Settings |
 | --- | --- |
 | ![Notifications view](docs/rssnotify-notifications.png) | ![Settings view](docs/rssnotify-settings.png) |
+
+## Project Docs
+
+- [Digests Plan](docs/digests-plan.md) - planned daily email digest collection and AI-assisted summarization workflow.
 
 ## Quick Start
 
@@ -82,6 +87,35 @@ Generated alerts from feed automations.
 
 The **deliver-notifications** job sends pending notifications using **Settings** (email and ntfy configuration).
 
+### Digests
+
+Scheduled email summaries of generated notifications.
+
+- **Name** – Label for the digest.
+- **Enabled** – Whether the digest runs.
+- **Schedule** – Daily send time and timezone.
+- **Recipient overrides** – Optional per-digest email recipients. When empty, the digest uses Settings email recipients.
+- **Automations / Feeds** – Optional filters for which notifications are included.
+- **Lookback hours** – How far back to look when a digest has not run before.
+- **Max notifications** – Cap on included notifications.
+- **Use AI summary and priority** – Uses the configured OpenAI-compatible model to summarize and order notifications.
+- **Digest instructions / Priority instructions** – Extra prompt instructions for summary style and ranking behavior.
+
+Digest email item links always use each notification’s **Source URL**. Digest delivery is audited through **Digest Runs**.
+
+### Digest Runs
+
+Audit records for digest delivery attempts.
+
+- **Digest** – Which digest generated the run.
+- **Run Key** – Dedupe key for a digest window.
+- **Status** – `pending`, `sent`, `failed`, or `skipped`.
+- **Window Start / Window End** – Notification window included in the run.
+- **Notifications** – Included notifications.
+- **Subject, Text, HTML** – Stored email output.
+- **AI Output** – Stored structured model response when AI was used.
+- **Error** – Delivery or AI fallback error detail.
+
 ### Users
 
 Admin users (auth collection). Used for login and access control. Managed under **Settings** in the admin.
@@ -110,6 +144,7 @@ Global that shows the job schedule and queue status. Used by the **process-feeds
 
 - **process-feeds** – Fetches RSS/Reddit/WordPress feeds, evaluates items with automations (and optionally OpenAI), creates notifications. Runs every 15 minutes by default (`*/15 * * * *`) and can be overridden with `PROCESS_FEEDS_CRON` (e.g. `0 0 * * *` for hourly).
 - **deliver-notifications** – Sends pending notifications via email and/or ntfy using Notification Settings. Runs every minute by default (`0 * * * * *`) and can be overridden with `DELIVER_NOTIFICATIONS_CRON`.
+- **send-digests** – Checks for due digests and sends scheduled email summaries. Runs every minute by default (`0 * * * * *`) and can be overridden with `SEND_DIGESTS_CRON`.
 
 Job execution is allowed for logged-in users or when the request includes the correct `CRON_SECRET` (e.g. for external cron or Vercel Cron).
 
@@ -169,8 +204,9 @@ Task defaults:
 
 - `PROCESS_FEEDS_CRON=*/15 * * * *` (every 15 minutes; use e.g. `0 0 * * *` for hourly)
 - `DELIVER_NOTIFICATIONS_CRON=0 * * * * *`
+- `SEND_DIGESTS_CRON=0 * * * * *`
 
-Override `PAYLOAD_JOBS_AUTORUN_CRON`, `PROCESS_FEEDS_CRON`, and `DELIVER_NOTIFICATIONS_CRON` at runtime as needed. For multiple replicas, enable autoRun on a single instance to avoid duplicate processing.
+Override `PAYLOAD_JOBS_AUTORUN_CRON`, `PROCESS_FEEDS_CRON`, `DELIVER_NOTIFICATIONS_CRON`, and `SEND_DIGESTS_CRON` at runtime as needed. For multiple replicas, enable autoRun on a single instance to avoid duplicate processing.
 
 ## Production
 

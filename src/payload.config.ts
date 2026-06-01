@@ -10,6 +10,8 @@ import nodemailer from 'nodemailer'
 import { FeedAutomations } from './collections/FeedAutomations'
 import { AutomationHistory } from './collections/NotificationHistory'
 import { Notifications } from './collections/Notifications'
+import { DigestRuns } from './collections/DigestRuns'
+import { Digests } from './collections/Digests'
 import { RssFeeds } from './collections/RssFeeds'
 import { Users } from './collections/Users'
 import { JobsGlobal } from './JobsGlobal/config'
@@ -89,7 +91,7 @@ export default buildConfig({
       transport: nodemailer.createTransport(process.env.SMTP_URL),
     }),
   }),
-  collections: [RssFeeds, FeedAutomations, Notifications, AutomationHistory, Users],
+  collections: [RssFeeds, FeedAutomations, Notifications, Digests, DigestRuns, AutomationHistory, Users],
   cors: [
     getServerSideURL(),
     'https://payloadcms.3twenty9.com',

@@ -70,6 +70,8 @@ export interface Config {
     'rss-feeds': RssFeed;
     'feed-automations': FeedAutomation;
     notifications: Notification;
+    digests: Digest;
+    'digest-runs': DigestRun;
     'automation-history': AutomationHistory;
     users: User;
     'payload-kv': PayloadKv;
@@ -83,6 +85,8 @@ export interface Config {
     'rss-feeds': RssFeedsSelect<false> | RssFeedsSelect<true>;
     'feed-automations': FeedAutomationsSelect<false> | FeedAutomationsSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    digests: DigestsSelect<false> | DigestsSelect<true>;
+    'digest-runs': DigestRunsSelect<false> | DigestRunsSelect<true>;
     'automation-history': AutomationHistorySelect<false> | AutomationHistorySelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -114,6 +118,7 @@ export interface Config {
     tasks: {
       'process-feeds': TaskProcessFeeds;
       'deliver-notifications': TaskDeliverNotifications;
+      'send-digests': TaskSendDigests;
       inline: {
         input: unknown;
         output: unknown;
@@ -226,6 +231,104 @@ export interface Notification {
     | number
     | boolean
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "digests".
+ */
+export interface Digest {
+  id: string;
+  name: string;
+  enabled: boolean;
+  schedule: {
+    /**
+     * 24-hour time in HH:mm format, evaluated in the selected timezone.
+     */
+    time: string;
+    timezone:
+      | 'America/New_York'
+      | 'America/Chicago'
+      | 'America/Denver'
+      | 'America/Los_Angeles'
+      | 'UTC'
+      | 'Europe/London'
+      | 'Europe/Berlin'
+      | 'Asia/Tokyo'
+      | 'Australia/Sydney';
+  };
+  /**
+   * Optional. When empty, the digest uses Settings > Notifications > Email recipients.
+   */
+  recipients?:
+    | {
+        email: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Optional. Limit this digest to notifications from selected automations.
+   */
+  automations?: (string | FeedAutomation)[] | null;
+  /**
+   * Optional. Limit this digest to notifications from selected feeds.
+   */
+  feeds?: (string | RssFeed)[] | null;
+  /**
+   * How far back to look for matching notifications when a digest has not run before.
+   */
+  lookbackHours: number;
+  /**
+   * Maximum number of notifications to include in one digest email.
+   */
+  maxNotifications: number;
+  useAI: boolean;
+  /**
+   * Additional system prompt instructions for summarizing this digest.
+   */
+  instructions?: string | null;
+  /**
+   * Optional instructions for how AI should rank and group notifications.
+   */
+  priorityInstructions?: string | null;
+  lastRunAt?: string | null;
+  lastSuccessAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "digest-runs".
+ */
+export interface DigestRun {
+  id: string;
+  digest: string | Digest;
+  /**
+   * Stable key used to prevent duplicate sends for the same digest window.
+   */
+  runKey: string;
+  status: 'pending' | 'sent' | 'failed' | 'skipped';
+  windowStart: string;
+  windowEnd: string;
+  sentAt?: string | null;
+  notifications?: (string | Notification)[] | null;
+  subject?: string | null;
+  text?: string | null;
+  html?: string | null;
+  /**
+   * Structured model response and metadata used to build the digest.
+   */
+  aiOutput?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  error?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -392,7 +495,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'process-feeds' | 'deliver-notifications';
+        taskSlug: 'inline' | 'process-feeds' | 'deliver-notifications' | 'send-digests';
         taskID: string;
         input?:
           | {
@@ -425,7 +528,7 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'process-feeds' | 'deliver-notifications') | null;
+  taskSlug?: ('inline' | 'process-feeds' | 'deliver-notifications' | 'send-digests') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
@@ -459,6 +562,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'notifications';
         value: string | Notification;
+      } | null)
+    | ({
+        relationTo: 'digests';
+        value: string | Digest;
+      } | null)
+    | ({
+        relationTo: 'digest-runs';
+        value: string | DigestRun;
       } | null)
     | ({
         relationTo: 'automation-history';
@@ -585,6 +696,57 @@ export interface NotificationsSelect<T extends boolean = true> {
             };
       };
   data?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "digests_select".
+ */
+export interface DigestsSelect<T extends boolean = true> {
+  name?: T;
+  enabled?: T;
+  schedule?:
+    | T
+    | {
+        time?: T;
+        timezone?: T;
+      };
+  recipients?:
+    | T
+    | {
+        email?: T;
+        id?: T;
+      };
+  automations?: T;
+  feeds?: T;
+  lookbackHours?: T;
+  maxNotifications?: T;
+  useAI?: T;
+  instructions?: T;
+  priorityInstructions?: T;
+  lastRunAt?: T;
+  lastSuccessAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "digest-runs_select".
+ */
+export interface DigestRunsSelect<T extends boolean = true> {
+  digest?: T;
+  runKey?: T;
+  status?: T;
+  windowStart?: T;
+  windowEnd?: T;
+  sentAt?: T;
+  notifications?: T;
+  subject?: T;
+  text?: T;
+  html?: T;
+  aiOutput?: T;
+  error?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -908,6 +1070,14 @@ export interface TaskProcessFeeds {
  * via the `definition` "TaskDeliver-notifications".
  */
 export interface TaskDeliverNotifications {
+  input?: unknown;
+  output?: unknown;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskSend-digests".
+ */
+export interface TaskSendDigests {
   input?: unknown;
   output?: unknown;
 }

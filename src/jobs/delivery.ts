@@ -47,9 +47,10 @@ export const sendEmail = async (args: {
   settings: EmailSettings
   subject: string
   text: string
+  html?: string
   sourceURL?: string | null
 }): Promise<{ status: 'sent' | 'skipped' | 'failed'; error?: string }> => {
-  const { payload, settings, subject, text, sourceURL } = args
+  const { payload, settings, subject, text, html, sourceURL } = args
 
   if (!settings.enabled) {
     return { status: 'skipped', error: 'Email delivery disabled.' }
@@ -68,9 +69,11 @@ export const sendEmail = async (args: {
   const from = settings.fromName ? `${settings.fromName} <${fromAddress}>` : fromAddress
 
   const textBody = sourceURL ? `${text}\n\nView source: ${sourceURL}` : text
-  const htmlBody = sourceURL
-    ? `<p>${escapeHtml(text)}</p><p><a href="${escapeHtml(sourceURL)}">View source</a></p>`
-    : `<p>${escapeHtml(text)}</p>`
+  const htmlBody =
+    html ||
+    (sourceURL
+      ? `<p>${escapeHtml(text)}</p><p><a href="${escapeHtml(sourceURL)}">View source</a></p>`
+      : `<p>${escapeHtml(text)}</p>`)
 
   try {
     await payload.sendEmail({
