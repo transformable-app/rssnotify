@@ -92,7 +92,7 @@ export default buildConfig({
       transport: nodemailer.createTransport(process.env.SMTP_URL),
     }),
   }),
-  collections: [RssFeeds, FeedAutomations, Notifications, Digests, DigestRuns, ResultFeeds, AutomationHistory, Users],
+  collections: [RssFeeds, FeedAutomations, Notifications, AutomationHistory, Digests, DigestRuns, ResultFeeds, Users],
   cors: [
     getServerSideURL(),
     'https://payloadcms.3twenty9.com',
