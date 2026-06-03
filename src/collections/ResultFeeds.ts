@@ -4,6 +4,7 @@ import { randomBytes } from 'crypto'
 
 import { authenticated } from '../access/authenticated'
 import { renderResultFeed } from '../jobs/resultFeeds'
+import { getServerSideURL } from '../utilities/getURL'
 
 const resultStatuses = [
   { label: 'Pending', value: 'pending' },
@@ -29,6 +30,26 @@ const resultFeedEndpoint = (format: 'atom' | 'rss' | 'configured') => ({
   },
 })
 
+const buildResultFeedURL = (args: {
+  id?: number | string | null
+  format?: unknown
+  token?: unknown
+  visibility?: unknown
+}): string | null => {
+  const { id, format, token, visibility } = args
+  if (!id) return null
+
+  const normalizedFormat = format === 'rss' ? 'rss' : 'atom'
+  const normalizedVisibility = visibility === 'public' ? 'public' : 'private'
+  const normalizedToken = typeof token === 'string' ? token.trim() : ''
+  const tokenQuery =
+    normalizedVisibility === 'private' && normalizedToken
+      ? `?token=${encodeURIComponent(normalizedToken)}`
+      : ''
+
+  return `${getServerSideURL().replace(/\/$/, '')}/api/result-feeds/${id}/feed.${normalizedFormat}${tokenQuery}`
+}
+
 export const ResultFeeds: CollectionConfig = {
   slug: 'result-feeds',
   labels: {
@@ -42,9 +63,14 @@ export const ResultFeeds: CollectionConfig = {
     update: authenticated,
   },
   admin: {
-    defaultColumns: ['name', 'resultType', 'visibility', 'enabled', 'updatedAt'],
+    defaultColumns: ['name', 'resultType', 'visibility', 'feedURL', 'enabled', 'updatedAt'],
     description:
       'Public or private Atom/RSS feeds of generated notification and digest results. Public feeds are unprotected; private feeds require the tokenized URL.',
+    components: {
+      edit: {
+        beforeDocumentControls: ['@/components/Admin/OpenResultFeedButton'],
+      },
+    },
     useAsTitle: 'name',
   },
   endpoints: [
@@ -170,6 +196,29 @@ export const ResultFeeds: CollectionConfig = {
       type: 'checkbox',
       defaultValue: true,
       required: true,
+    },
+    {
+      name: 'feedURL',
+      label: 'Feed URL',
+      type: 'text',
+      virtual: true,
+      admin: {
+        components: {
+          Cell: '@/components/Admin/ResultFeedUrlCell',
+        },
+        readOnly: true,
+      },
+      hooks: {
+        afterRead: [
+          ({ siblingData }) =>
+            buildResultFeedURL({
+              id: siblingData?.id,
+              format: siblingData?.format,
+              token: siblingData?.token,
+              visibility: siblingData?.visibility,
+            }),
+        ],
+      },
     },
     {
       name: 'lastAccessedAt',

@@ -372,6 +372,7 @@ export interface ResultFeed {
    */
   statuses?: ('pending' | 'sent' | 'failed' | 'skipped')[] | null;
   includeContent: boolean;
+  feedURL?: string | null;
   lastAccessedAt?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -815,6 +816,7 @@ export interface ResultFeedsSelect<T extends boolean = true> {
   digests?: T;
   statuses?: T;
   includeContent?: T;
+  feedURL?: T;
   lastAccessedAt?: T;
   updatedAt?: T;
   createdAt?: T;
