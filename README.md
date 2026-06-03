@@ -10,6 +10,7 @@ Built with [Payload CMS](https://payloadcms.com)
 - **Feed Automations** – Define rules per automation: optional OpenAI-based filtering, “notify every post,” and type-specific options (e.g. follow post RSS, process comments for Reddit/WordPress).
 - **Notifications** – View and manage generated alerts; delivery status (email / ntfy) and bulk actions in the admin.
 - **Digests** – Send scheduled email summaries of notifications, optionally summarized and prioritized with AI.
+- **Result Feeds** – Publish public or token-protected Atom/RSS feeds of notification and digest results.
 - **Scheduled jobs** – Process feeds and deliver notifications on a cron schedule.
 - **Notification delivery** – Email (SMTP) and/or ntfy; configurable in Settings.
 
@@ -30,6 +31,7 @@ Built with [Payload CMS](https://payloadcms.com)
 ## Project Docs
 
 - [Digests Plan](docs/digests-plan.md) - planned daily email digest collection and AI-assisted summarization workflow.
+- [Result Feeds Plan](docs/result-feeds-plan.md) - plan for public and private output feeds of notification and digest results.
 
 ## Quick Start
 
@@ -116,6 +118,29 @@ Audit records for digest delivery attempts.
 - **AI Output** – Stored structured model response when AI was used.
 - **Error** – Delivery or AI fallback error detail.
 
+### Result Feeds
+
+Public or private Atom/RSS output feeds of generated results.
+
+- **Name** – Label for the feed.
+- **Enabled** – Whether the feed URL can be served.
+- **Result Type** – `Notifications` or `Digests`.
+- **Visibility** – `Private` requires the feed token; `Public` is visible to anyone with the URL.
+- **Token** – Secret token accepted as `?token=<token>` or `Authorization: Bearer <token>` for private feeds.
+- **Format** – Default format for `/feed.xml`; explicit `/feed.atom` and `/feed.rss` are also available.
+- **Limit** – Maximum entries to include.
+- **Automations / Feeds / Digests** – Optional filters for which results are included.
+- **Statuses** – Optional status filter. When empty, feeds default to sent results.
+- **Include Content** – Includes notification messages or digest summaries in entries.
+
+Feed URLs:
+
+- `/api/result-feeds/:id/feed.xml`
+- `/api/result-feeds/:id/feed.atom`
+- `/api/result-feeds/:id/feed.rss`
+
+Notification result entries link to each notification’s **Source URL**.
+
 ### Users
 
 Admin users (auth collection). Used for login and access control. Managed under **Settings** in the admin.
@@ -137,7 +162,7 @@ Global that shows the job schedule and queue status. Used by the **process-feeds
 
 ## Access control
 
-- **RSS Feeds, Feed Automations, Notifications, Users** – Only authenticated users can create, read, update, and delete.
+- **RSS Feeds, Feed Automations, Notifications, Result Feeds, Users** – Only authenticated users can create, read, update, and delete.
 - **Settings, Jobs** – Only authenticated users can read and update.
 
 ## Jobs and schedule

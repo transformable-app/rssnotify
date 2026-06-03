@@ -72,6 +72,7 @@ export interface Config {
     notifications: Notification;
     digests: Digest;
     'digest-runs': DigestRun;
+    'result-feeds': ResultFeed;
     'automation-history': AutomationHistory;
     users: User;
     'payload-kv': PayloadKv;
@@ -87,6 +88,7 @@ export interface Config {
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     digests: DigestsSelect<false> | DigestsSelect<true>;
     'digest-runs': DigestRunsSelect<false> | DigestRunsSelect<true>;
+    'result-feeds': ResultFeedsSelect<false> | ResultFeedsSelect<true>;
     'automation-history': AutomationHistorySelect<false> | AutomationHistorySelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -333,6 +335,48 @@ export interface DigestRun {
   createdAt: string;
 }
 /**
+ * Public or private Atom/RSS feeds of generated notification and digest results. Public feeds are unprotected; private feeds require the tokenized URL.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "result-feeds".
+ */
+export interface ResultFeed {
+  id: string;
+  name: string;
+  enabled: boolean;
+  resultType: 'notifications' | 'digests';
+  /**
+   * Public feeds are visible to anyone with the URL. Private feeds require the token.
+   */
+  visibility: 'private' | 'public';
+  /**
+   * Secret token required for private feed URLs. Rotate by replacing this value.
+   */
+  token: string;
+  format: 'atom' | 'rss';
+  limit: number;
+  /**
+   * Optional. Limit notification feeds to selected automations.
+   */
+  automations?: (string | FeedAutomation)[] | null;
+  /**
+   * Optional. Limit notification feeds to selected source feeds.
+   */
+  feeds?: (string | RssFeed)[] | null;
+  /**
+   * Optional. Limit digest feeds to selected digest definitions.
+   */
+  digests?: (string | Digest)[] | null;
+  /**
+   * Optional. Notification feeds default to sent results. Digest feeds default to sent digest runs.
+   */
+  statuses?: ('pending' | 'sent' | 'failed' | 'skipped')[] | null;
+  includeContent: boolean;
+  lastAccessedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "automation-history".
  */
@@ -572,6 +616,10 @@ export interface PayloadLockedDocument {
         value: string | DigestRun;
       } | null)
     | ({
+        relationTo: 'result-feeds';
+        value: string | ResultFeed;
+      } | null)
+    | ({
         relationTo: 'automation-history';
         value: string | AutomationHistory;
       } | null)
@@ -747,6 +795,27 @@ export interface DigestRunsSelect<T extends boolean = true> {
   html?: T;
   aiOutput?: T;
   error?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "result-feeds_select".
+ */
+export interface ResultFeedsSelect<T extends boolean = true> {
+  name?: T;
+  enabled?: T;
+  resultType?: T;
+  visibility?: T;
+  token?: T;
+  format?: T;
+  limit?: T;
+  automations?: T;
+  feeds?: T;
+  digests?: T;
+  statuses?: T;
+  includeContent?: T;
+  lastAccessedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
