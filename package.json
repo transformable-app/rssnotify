@@ -58,7 +58,7 @@
     "geist": "^1.7.0",
     "graphql": "^16.13.0",
     "lucide-react": "0.577.0",
-    "next": "16.2.6",
+    "next": "16.2.9",
     "nodemailer": "8.0.9",
     "payload": "3.85.0",
     "prism-react-renderer": "^2.3.1",
