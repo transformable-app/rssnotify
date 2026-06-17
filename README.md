@@ -28,11 +28,6 @@ Built with [Payload CMS](https://payloadcms.com)
 | --- | --- |
 | ![Notifications view](docs/rssnotify-notifications.png) | ![Settings view](docs/rssnotify-settings.png) |
 
-## Project Docs
-
-- [Digests Plan](docs/digests-plan.md) - planned daily email digest collection and AI-assisted summarization workflow.
-- [Result Feeds Plan](docs/result-feeds-plan.md) - plan for public and private output feeds of notification and digest results.
-
 ## Quick Start
 
 1. Clone the repo and create a `.env` in the project root. Set at least:
