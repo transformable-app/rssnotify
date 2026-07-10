@@ -969,6 +969,22 @@ export interface Setting {
      * Additional system instructions prepended before the evaluation prompt.
      */
     systemPrompt?: string | null;
+    /**
+     * Optional OpenAI-compatible fallback provider base URLs. When configured, these override the OPENAI_FALLBACK_BASE_URLS env var and each endpoint uses its own API key.
+     */
+    fallbackEndpoints?:
+      | {
+          /**
+           * OpenAI-compatible provider base URL, for example https://router.example.com.
+           */
+          baseURL: string;
+          /**
+           * Bearer token used only for this fallback endpoint. The primary endpoint still uses OPENAI_API_KEY.
+           */
+          apiKey: string;
+          id?: string | null;
+        }[]
+      | null;
   };
   firecrawl?: {
     /**
@@ -1057,6 +1073,13 @@ export interface SettingsSelect<T extends boolean = true> {
     | {
         defaultModel?: T;
         systemPrompt?: T;
+        fallbackEndpoints?:
+          | T
+          | {
+              baseURL?: T;
+              apiKey?: T;
+              id?: T;
+            };
       };
   firecrawl?:
     | T

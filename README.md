@@ -16,16 +16,16 @@ Built with [Payload CMS](https://payloadcms.com)
 
 ## Screenshots
 
-| Dashboard | RSS Feeds |
-| --- | --- |
+| Dashboard                                       | RSS Feeds                                      |
+| ----------------------------------------------- | ---------------------------------------------- |
 | ![Dashboard view](docs/rssnotify-dashboard.png) | ![RSS feeds view](docs/rssnotify-rssfeeds.png) |
 
-| Feed Automations | Create Automation |
-| --- | --- |
+| Feed Automations                                         | Create Automation                                              |
+| -------------------------------------------------------- | -------------------------------------------------------------- |
 | ![Feed automations view](docs/rssnotify-automations.png) | ![Create automation view](docs/rssnotify-createautomation.png) |
 
-| Notifications | Settings |
-| --- | --- |
+| Notifications                                           | Settings                                      |
+| ------------------------------------------------------- | --------------------------------------------- |
 | ![Notifications view](docs/rssnotify-notifications.png) | ![Settings view](docs/rssnotify-settings.png) |
 
 ## Quick Start
@@ -35,7 +35,7 @@ Built with [Payload CMS](https://payloadcms.com)
    - `NEXT_PUBLIC_SERVER_URL` – public URL of the app (e.g. `http://localhost:3000`)
    - `CRON_SECRET` – secret for cron/job endpoints (required)
    - `PREVIEW_SECRET` – secret for preview (required)
-   Optionally: `OPENAI_API_KEY` (and `OPENAI_BASE_URL`, `MODEL_NAME`) for AI filtering. MongoDB credentials default in Compose; override with `MONGO_INITDB_ROOT_USERNAME`, `MONGO_INITDB_ROOT_PASSWORD`, `MONGO_INITDB_DATABASE` if needed.
+   - Optionally: `OPENAI_API_KEY` (and `OPENAI_BASE_URL`, `OPENAI_FALLBACK_BASE_URLS`, `MODEL_NAME`) for AI filtering and digest summarization. MongoDB credentials default in Compose; override with `MONGO_INITDB_ROOT_USERNAME`, `MONGO_INITDB_ROOT_PASSWORD`, `MONGO_INITDB_DATABASE` if needed.
 2. Start the stack with Docker Compose using this project’s [docker-compose.yml](docker-compose.yml):
    ```bash
    docker-compose up
@@ -146,7 +146,7 @@ Admin users (auth collection). Used for login and access control. Managed under 
 
 Configure feed processing and notification delivery.
 
-- **Model Settings** – Default model and system prompt used when an automation does not override them.
+- **Model Settings** – Default model, system prompt, and optional OpenAI-compatible fallback endpoints used when an automation does not override them. Fallback endpoints configured here override `OPENAI_FALLBACK_BASE_URLS` and can each use a different API key.
 - **Firecrawl** – Optional host/token for RSS retrieval. If Firecrawl is not configured, rssnotify keeps using the existing direct fetch approach. Leave the token blank for self-hosted instances that do not require authentication.
 - **Email** – Enabled, From Name, From Email, Reply-To, Recipients (list of addresses). Used with SMTP (e.g. Nodemailer); ensure your deployment has SMTP env vars configured if you use email.
 - **Ntfy** – Enabled, Server URL (e.g. `https://ntfy.sh`), Auth Token (optional), Channels (list of topics).
@@ -180,13 +180,29 @@ When using the external script `./scripts/run-payload-jobs-every-minute.sh`, it 
 
 Use a local MongoDB instance or Docker for `DATABASE_URL`. Optional: set `OPENAI_API_KEY` (and related env) to test AI-based filtering.
 
+### OpenAI-compatible endpoints
+
+AI filtering and digest summarization use OpenAI chat-completions compatible endpoints.
+
+- `OPENAI_BASE_URL` sets the primary provider base URL. Defaults to `https://api.openai.com`.
+- `OPENAI_FALLBACK_BASE_URLS` is an optional comma-separated list of alternate provider base URLs to try when the primary endpoint has a transport, timeout, rate-limit, or service failure.
+- Settings > Model Settings can define fallback endpoints with a base URL and API key for each provider. When any admin fallback endpoint is configured, that list overrides `OPENAI_FALLBACK_BASE_URLS`.
+- Env-configured fallback URLs reuse `OPENAI_API_KEY`; admin-configured fallback endpoints use their own saved API keys.
+
+Example:
+
+```env
+OPENAI_BASE_URL=https://api.openai.com
+OPENAI_FALLBACK_BASE_URLS=https://router-a.example.com,https://router-b.example.com
+```
+
 ## Docker
 
 ### Run with Docker Compose
 
 The repo includes a production Compose setup that runs the app and MongoDB:
 
-1. Set required env (e.g. in `.env`): `PAYLOAD_SECRET`, `NEXT_PUBLIC_SERVER_URL`, `CRON_SECRET`, `PREVIEW_SECRET`. Optionally: `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `MODEL_NAME`, MongoDB credentials, `RSS_FETCH_JITTER_*`.
+1. Set required env (e.g. in `.env`): `PAYLOAD_SECRET`, `NEXT_PUBLIC_SERVER_URL`, `CRON_SECRET`, `PREVIEW_SECRET`. Optionally: `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_FALLBACK_BASE_URLS`, `MODEL_NAME`, MongoDB credentials, `RSS_FETCH_JITTER_*`.
 2. Run:
    ```bash
    docker-compose up

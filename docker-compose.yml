@@ -21,6 +21,7 @@ services:
       DELIVER_NOTIFICATIONS_CRON: '${DELIVER_NOTIFICATIONS_CRON:-0 * * * * *}'
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com}
+      OPENAI_FALLBACK_BASE_URLS: ${OPENAI_FALLBACK_BASE_URLS:-}
       MODEL_NAME: ${MODEL_NAME:-gpt-4o-mini}
 
   mongo:

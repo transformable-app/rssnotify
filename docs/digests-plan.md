@@ -151,6 +151,7 @@ Generate the import map only if custom admin components are added.
 ### Phase 3: AI summary and priority
 
 - Extract shared OpenAI-compatible request helper from `processFeeds`.
+- Follow the endpoint fallback design in `docs/openai-endpoint-fallback-plan.md` so digest AI and feed filtering share the same primary/fallback endpoint behavior.
 - Add digest prompt fields.
 - Generate structured model output.
 - Fall back to basic digest when AI fails.

@@ -34,10 +34,40 @@ export const Settings: GlobalConfig = {
           label: 'System prompt',
           type: 'textarea',
           admin: {
-            description:
-              'Additional system instructions prepended before the evaluation prompt.',
+            description: 'Additional system instructions prepended before the evaluation prompt.',
             placeholder: DEFAULT_MODEL_BASE_PROMPT,
           },
+        },
+        {
+          name: 'fallbackEndpoints',
+          label: 'Fallback endpoints',
+          type: 'array',
+          admin: {
+            description:
+              'Optional OpenAI-compatible fallback provider base URLs. When configured, these override the OPENAI_FALLBACK_BASE_URLS env var and each endpoint uses its own API key.',
+          },
+          fields: [
+            {
+              name: 'baseURL',
+              label: 'Base URL',
+              type: 'text',
+              required: true,
+              admin: {
+                description:
+                  'OpenAI-compatible provider base URL, for example https://router.example.com.',
+              },
+            },
+            {
+              name: 'apiKey',
+              label: 'API key',
+              type: 'text',
+              required: true,
+              admin: {
+                description:
+                  'Bearer token used only for this fallback endpoint. The primary endpoint still uses OPENAI_API_KEY.',
+              },
+            },
+          ],
         },
       ],
     },
@@ -47,20 +77,21 @@ export const Settings: GlobalConfig = {
       type: 'group',
       fields: [
         {
-              name: 'host',
-              label: 'Host',
-              type: 'text',
-              admin: {
-                description:
-                  'Optional Firecrawl base URL used for RSS retrieval, for example https://api.firecrawl.dev or http://localhost:3001.',
-              },
-            },
+          name: 'host',
+          label: 'Host',
+          type: 'text',
+          admin: {
+            description:
+              'Optional Firecrawl base URL used for RSS retrieval, for example https://api.firecrawl.dev or http://localhost:3001.',
+          },
+        },
         {
           name: 'token',
           label: 'Token',
           type: 'text',
           admin: {
-            description: 'Optional Firecrawl auth token. Leave blank for self-hosted instances that do not require one.',
+            description:
+              'Optional Firecrawl auth token. Leave blank for self-hosted instances that do not require one.',
           },
         },
       ],

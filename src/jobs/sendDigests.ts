@@ -2,6 +2,10 @@ import type { PayloadRequest, TaskConfig, Where } from 'payload'
 import type { Digest, Notification, Setting } from '@/payload-types'
 
 import { DEFAULT_MODEL_NAME } from '@/constants/modelDefaults'
+import {
+  formatOpenAIEndpointAttempts,
+  runOpenAIChatCompletion,
+} from '@/utilities/openAIChatCompletions'
 import { sendEmail, type EmailSettings } from './delivery'
 
 const DEFAULT_SEND_DIGESTS_CRON = '0 * * * * *'
@@ -33,11 +37,7 @@ const sleep = async (ms: number): Promise<void> => {
 }
 
 const escapeHtml = (s: string): string =>
-  s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
   if (!value) return fallback
@@ -189,7 +189,11 @@ const loadNotifications = async (args: {
   return result.docs as DigestNotification[]
 }
 
-const buildBasicSubject = (digest: Digest, notifications: DigestNotification[], now: Date): string => {
+const buildBasicSubject = (
+  digest: Digest,
+  notifications: DigestNotification[],
+  now: Date,
+): string => {
   const date = new Intl.DateTimeFormat('en-US', {
     dateStyle: 'medium',
     timeZone: digest.schedule?.timezone || 'UTC',
@@ -246,9 +250,7 @@ const buildNotificationHtml = (notification: DigestNotification, index: number):
   ].filter(Boolean)
   const title = escapeHtml(notification.title || 'Untitled notification')
   const link = notification.sourceURL
-  const linkedTitle = link
-    ? `<a href="${escapeHtml(link)}">${title}</a>`
-    : title
+  const linkedTitle = link ? `<a href="${escapeHtml(link)}">${title}</a>` : title
 
   return [
     '<li>',
@@ -329,53 +331,32 @@ const runDigestModel = async (args: {
     .filter(Boolean)
     .join('\n\n')
 
-  const baseURL = process.env.OPENAI_BASE_URL || 'https://api.openai.com'
-  const endpoint = baseURL.replace(/\/$/, '') + '/v1/chat/completions'
   const configuredModel = settings.modelSettings?.defaultModel?.trim()
   const modelName = configuredModel || process.env.MODEL_NAME || DEFAULT_MODEL_NAME
   const timeoutMs = parsePositiveInt(process.env.OPENAI_TIMEOUT_MS, DEFAULT_MODEL_TIMEOUT_MS)
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), timeoutMs)
 
-  try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: modelName,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: buildAIContent(notifications) },
-        ],
-      }),
-    })
+  const result = await runOpenAIChatCompletion({
+    apiKey,
+    model: modelName,
+    timeoutMs,
+    baseURL: process.env.OPENAI_BASE_URL,
+    fallbackBaseURLs: process.env.OPENAI_FALLBACK_BASE_URLS,
+    fallbackEndpoints: settings.modelSettings?.fallbackEndpoints || undefined,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: buildAIContent(notifications) },
+    ],
+  })
 
-    const rawResponse = await response.text()
-    if (!response.ok) {
-      return { error: `AI request failed: ${response.status} ${response.statusText}` }
-    }
-
-    let payload: { choices?: { message?: { content?: string } }[] } | null = null
-    try {
-      payload = JSON.parse(rawResponse) as { choices?: { message?: { content?: string } }[] }
-    } catch {
-      return { error: 'AI response was not valid JSON.' }
-    }
-
-    const content = payload.choices?.[0]?.message?.content || ''
-    const output = parseAIOutput(content)
-    if (!output) return { error: 'AI response content was not valid digest JSON.' }
-
-    return { output }
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : 'Unknown AI error.' }
-  } finally {
-    clearTimeout(timeout)
+  if (!result.ok) {
+    const attempts = formatOpenAIEndpointAttempts(result.attempts)
+    return { error: attempts ? `${result.error}; attempts: ${attempts}` : result.error }
   }
+
+  const output = parseAIOutput(result.content)
+  if (!output) return { error: 'AI response content was not valid digest JSON.' }
+
+  return { output }
 }
 
 const applyAIOrder = (
@@ -553,7 +534,8 @@ export const sendDigestsTask: TaskConfig = {
         ? await runDigestModel({ digest, settings: settings as Setting, notifications })
         : {}
       const orderedNotifications = applyAIOrder(notifications, aiResult.output)
-      const subject = aiResult.output?.subject?.trim() || buildBasicSubject(digest, orderedNotifications, now)
+      const subject =
+        aiResult.output?.subject?.trim() || buildBasicSubject(digest, orderedNotifications, now)
       const text = buildBasicText({
         digest,
         notifications: orderedNotifications,

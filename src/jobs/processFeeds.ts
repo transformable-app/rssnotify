@@ -6,6 +6,11 @@ import {
   DEFAULT_MODEL_NAME,
   MODEL_RESPONSE_CONSTRAINTS,
 } from '@/constants/modelDefaults'
+import {
+  type OpenAIChatCompletionFallbackEndpoint,
+  formatOpenAIEndpointAttempts,
+  runOpenAIChatCompletion,
+} from '@/utilities/openAIChatCompletions'
 
 import { fetchFeedItems } from './rss'
 
@@ -49,8 +54,9 @@ const runModelCheck = async (args: {
   prompt?: string | null
   defaultModel?: string | null
   defaultSystemPrompt?: string | null
+  fallbackEndpoints?: OpenAIChatCompletionFallbackEndpoint[] | null
 }): Promise<boolean> => {
-  const { content, model, prompt, defaultModel, defaultSystemPrompt } = args
+  const { content, model, prompt, defaultModel, defaultSystemPrompt, fallbackEndpoints } = args
 
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) return false
@@ -60,95 +66,74 @@ const runModelCheck = async (args: {
   const evaluationPrompt = automationPrompt || DEFAULT_MODEL_BASE_PROMPT
   const systemPrompt = `${configuredSystemPrompt}\n\n${evaluationPrompt}`
 
-  const baseURL = process.env.OPENAI_BASE_URL || 'https://api.openai.com'
-  const endpoint = baseURL.replace(/\/$/, '') + '/v1/chat/completions'
   const automationModel = typeof model === 'string' ? model.trim() : ''
   const configuredModel = typeof defaultModel === 'string' ? defaultModel.trim() : ''
-  const modelName = automationModel || configuredModel || process.env.MODEL_NAME || DEFAULT_MODEL_NAME
+  const modelName =
+    automationModel || configuredModel || process.env.MODEL_NAME || DEFAULT_MODEL_NAME
   const debugFeeds = process.env.DEBUG_FEEDS === 'true'
   const debugPreviewChars = 1000
   const timeoutMs = parseDelaySeconds(process.env.OPENAI_TIMEOUT_MS, DEFAULT_MODEL_TIMEOUT_MS)
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), timeoutMs)
-  const startedAt = Date.now()
 
   if (debugFeeds) {
     console.log(
-      `[process-feeds debug] OpenAI request: endpoint=${endpoint} model=${modelName} contentChars=${content.length} timeoutMs=${timeoutMs}`,
+      `[process-feeds debug] OpenAI request: model=${modelName} contentChars=${content.length} timeoutMs=${timeoutMs}`,
     )
   }
 
-  try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${apiKey}`,
+  const result = await runOpenAIChatCompletion({
+    apiKey,
+    model: modelName,
+    timeoutMs,
+    baseURL: process.env.OPENAI_BASE_URL,
+    fallbackBaseURLs: process.env.OPENAI_FALLBACK_BASE_URLS,
+    fallbackEndpoints: fallbackEndpoints || undefined,
+    responsePreviewChars: debugFeeds ? debugPreviewChars : undefined,
+    messages: [
+      {
+        role: 'system',
+        content: systemPrompt,
       },
-      body: JSON.stringify({
-        model: modelName,
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          {
-            role: 'user',
-            content,
-          },
-        ],
-      }),
-    })
+      {
+        role: 'user',
+        content,
+      },
+    ],
+  })
 
-    const rawResponse = await response.text()
-
-    if (debugFeeds) {
-      const preview =
-        rawResponse.length > debugPreviewChars
-          ? `${rawResponse.slice(0, debugPreviewChars)}...`
-          : rawResponse
+  if (debugFeeds) {
+    result.attempts.forEach((attempt) => {
+      const preview = attempt.responsePreview ? ` body=${attempt.responsePreview}` : ''
       console.log(
-        `[process-feeds debug] OpenAI response: status=${response.status} ok=${response.ok} elapsedMs=${Date.now() - startedAt} body=${preview}`,
+        `[process-feeds debug] OpenAI attempt: endpoint=${attempt.endpoint} status=${attempt.status ?? 'none'} retryable=${attempt.retryable} elapsedMs=${attempt.elapsedMs} error=${attempt.error || 'none'}${preview}`,
       )
-    }
+    })
+  }
 
-    if (!response.ok) {
-      return false
-    }
-
-    let payload: { choices?: { message?: { content?: string } }[] } | null = null
-    try {
-      payload = JSON.parse(rawResponse) as { choices?: { message?: { content?: string } }[] }
-    } catch {
-      if (debugFeeds) {
-        console.log('[process-feeds debug] OpenAI response was not valid JSON')
-      }
-      return false
-    }
-
-    const rawAnswer = payload.choices?.[0]?.message?.content || ''
-    if (debugFeeds) {
-      console.log(`[process-feeds debug] model response (${modelName}): ${rawAnswer}`)
-    }
-    const answer = rawAnswer.toLowerCase()
-    return answer.includes('yes') || answer.includes('true')
-  } catch (error) {
+  if (!result.ok) {
     if (debugFeeds) {
       console.log(
-        `[process-feeds debug] OpenAI request failed after ${Date.now() - startedAt}ms: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `[process-feeds debug] OpenAI request failed: ${result.error}; attempts=${formatOpenAIEndpointAttempts(result.attempts)}`,
       )
     }
     return false
-  } finally {
-    clearTimeout(timeout)
   }
+
+  if (debugFeeds) {
+    console.log(
+      `[process-feeds debug] OpenAI response: endpoint=${result.endpoint} model=${result.model} attempts=${result.attempts.length}`,
+    )
+    console.log(`[process-feeds debug] model response (${modelName}): ${result.content}`)
+  }
+
+  const answer = result.content.toLowerCase()
+  return answer.includes('yes') || answer.includes('true')
 }
 
 type ProcessingSettings = {
   modelSettings?: {
     defaultModel?: string | null
     systemPrompt?: string | null
+    fallbackEndpoints?: OpenAIChatCompletionFallbackEndpoint[] | null
   } | null
   firecrawl?: {
     host?: string | null
@@ -262,7 +247,13 @@ const expandItemsForAutomation = async (
     const parentTitle = item.title
     const parentContent = item.content
     return [
-      { ...item, __isParent: true, __parentKey: parentKey, __parentTitle: parentTitle, __parentContent: parentContent },
+      {
+        ...item,
+        __isParent: true,
+        __parentKey: parentKey,
+        __parentTitle: parentTitle,
+        __parentContent: parentContent,
+      },
       ...commentItems.map((comment) => ({
         ...comment,
         __isComment: true,
@@ -303,7 +294,9 @@ const isLikelyItemKeyConflict = (error: unknown): boolean => {
   if (!(error instanceof Error)) return false
 
   const message = error.message.toLowerCase()
-  return message.includes('itemkey') || message.includes('duplicate key') || message.includes('unique')
+  return (
+    message.includes('itemkey') || message.includes('duplicate key') || message.includes('unique')
+  )
 }
 
 const getRetryDate = (baseDate: Date, retryNumber: number): Date | null => {
@@ -417,7 +410,8 @@ const upsertHistory = async (args: {
   const previousRetryCount = getStoredRetryCount(history)
   const currentRetryNumber = history ? previousRetryCount + 1 : 0
   const attemptCount = previousAttemptCount + 1
-  const nextRetryDate = status === 'ignored' ? getRetryDate(checkedAtDate, currentRetryNumber) : null
+  const nextRetryDate =
+    status === 'ignored' ? getRetryDate(checkedAtDate, currentRetryNumber) : null
   const nextRetryAt = nextRetryDate?.toISOString()
   const retryExhausted = status === 'ignored' ? nextRetryDate === null : false
   const checks = [
@@ -453,24 +447,24 @@ const upsertHistory = async (args: {
   } as unknown as Omit<AutomationHistory, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>
 
   if (history?.id) {
-    return await req.payload.update({
+    return (await req.payload.update({
       collection: 'automation-history',
       id: history.id,
       data: payloadData,
       draft: false,
       overrideAccess: true,
       req,
-    }) as AutomationHistory
+    })) as AutomationHistory
   }
 
   try {
-    return await req.payload.create({
+    return (await req.payload.create({
       collection: 'automation-history',
       data: payloadData,
       draft: false,
       overrideAccess: true,
       req,
-    }) as AutomationHistory
+    })) as AutomationHistory
   } catch (error) {
     // Scheduled jobs can overlap and race on the unique itemKey. If another task
     // created the history row after our initial lookup, re-read it and update it.
@@ -605,6 +599,7 @@ export const processFeedsTask: TaskConfig = {
     const processingSettings = settingsResult as ProcessingSettings
     const settingsModel = processingSettings?.modelSettings?.defaultModel
     const settingsSystemPrompt = processingSettings?.modelSettings?.systemPrompt
+    const settingsFallbackEndpoints = processingSettings?.modelSettings?.fallbackEndpoints
 
     if (debug) {
       req.payload.logger.info(
@@ -613,7 +608,9 @@ export const processFeedsTask: TaskConfig = {
     }
 
     for (const feed of feeds) {
-      const feedAutomations = automations.filter((automation) => shouldProcessAutomation(automation, feed))
+      const feedAutomations = automations.filter((automation) =>
+        shouldProcessAutomation(automation, feed),
+      )
       if (!feedAutomations.length) continue
 
       let items = [] as Awaited<ReturnType<typeof fetchFeedItems>>
@@ -629,7 +626,9 @@ export const processFeedsTask: TaskConfig = {
         logTiming(
           `process-feeds debug: feed fetch failed for "${feed.name}" elapsedMs=${Date.now() - fetchStartedAt} error=${error instanceof Error ? error.message : 'Unknown error'}`,
         )
-        summary.errors.push(`Feed ${feed.url}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        summary.errors.push(
+          `Feed ${feed.url}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        )
         continue
       }
 
@@ -648,22 +647,22 @@ export const processFeedsTask: TaskConfig = {
             automation.type === 'rss'
               ? [item as FeedItemWithFlags]
               : await (async () => {
-                const expandStartedAt = Date.now()
-                logDebug(
-                  debugKey,
-                  `process-feeds debug: expanding item "${item.title || 'untitled'}" for automation "${automation.name}"`,
-                )
-                const expandedItems = await expandItemsForAutomation(
-                  item as FeedItemWithFlags,
-                  rules,
-                  processingSettings,
-                )
-                logDebug(
-                  debugKey,
-                  `process-feeds debug: expanded item "${item.title || 'untitled'}" count=${expandedItems.length} elapsedMs=${Date.now() - expandStartedAt}`,
-                )
-                return expandedItems
-              })()
+                  const expandStartedAt = Date.now()
+                  logDebug(
+                    debugKey,
+                    `process-feeds debug: expanding item "${item.title || 'untitled'}" for automation "${automation.name}"`,
+                  )
+                  const expandedItems = await expandItemsForAutomation(
+                    item as FeedItemWithFlags,
+                    rules,
+                    processingSettings,
+                  )
+                  logDebug(
+                    debugKey,
+                    `process-feeds debug: expanded item "${item.title || 'untitled'}" count=${expandedItems.length} elapsedMs=${Date.now() - expandStartedAt}`,
+                  )
+                  return expandedItems
+                })()
 
           const commentItems = itemsToProcess.filter((entry) => entry.__isComment)
           const parentItemForComments =
@@ -688,6 +687,7 @@ export const processFeedsTask: TaskConfig = {
               prompt: typeof rules?.modelPrompt === 'string' ? rules.modelPrompt : undefined,
               defaultModel: settingsModel,
               defaultSystemPrompt: settingsSystemPrompt,
+              fallbackEndpoints: settingsFallbackEndpoints,
             })
 
             logDebug(
@@ -697,13 +697,16 @@ export const processFeedsTask: TaskConfig = {
           }
 
           for (const targetItem of itemsToProcess) {
-            const isRedditComment = automation.type === 'reddit' && (targetItem as FeedItemWithFlags).__isComment
+            const isRedditComment =
+              automation.type === 'reddit' && (targetItem as FeedItemWithFlags).__isComment
             const content = isRedditComment
               ? [targetItem.content].filter(Boolean).join('\n\n')
               : [targetItem.title, targetItem.content].filter(Boolean).join('\n\n')
             const modelContent = isRedditComment
               ? [
-                  targetItem.__parentTitle ? `Parent post title: ${targetItem.__parentTitle}` : null,
+                  targetItem.__parentTitle
+                    ? `Parent post title: ${targetItem.__parentTitle}`
+                    : null,
                   targetItem.__parentContent
                     ? `Parent post content: ${normalizeContent(targetItem.__parentContent).slice(0, 2000)}`
                     : null,
@@ -741,9 +744,10 @@ export const processFeedsTask: TaskConfig = {
                 continue
               }
             }
-            const sourceURL = automation.type === 'reddit'
-              ? targetItem.commentsLink || targetItem.link
-              : targetItem.link
+            const sourceURL =
+              automation.type === 'reddit'
+                ? targetItem.commentsLink || targetItem.link
+                : targetItem.link
 
             const historyStartedAt = Date.now()
             const existingHistory = await getHistoryEntry({
@@ -764,7 +768,11 @@ export const processFeedsTask: TaskConfig = {
               `process-feeds debug: history state for "${targetItem.title || 'untitled'}" => ${existingHistory?.status || 'new'} skip=${skipBecauseOfHistory}`,
             )
 
-            if (existingHistory?.status === 'notified' && (targetItem as FeedItemWithFlags).__isParent && parentKey) {
+            if (
+              existingHistory?.status === 'notified' &&
+              (targetItem as FeedItemWithFlags).__isParent &&
+              parentKey
+            ) {
               parentNotified.set(parentKey, true)
             }
 
@@ -772,25 +780,27 @@ export const processFeedsTask: TaskConfig = {
 
             const modelOk = notifyEveryPost
               ? true
-              : commentModelDecision ?? (await (async () => {
-                const modelStartedAt = Date.now()
-                logDebug(
-                  debugKey,
-                  `process-feeds debug: running model check for "${targetItem.title || 'untitled'}"`,
-                )
-                const result = await runModelCheck({
-                  content: modelContent,
-                  model: typeof rules?.model === 'string' ? rules.model : undefined,
-                  prompt: typeof rules?.modelPrompt === 'string' ? rules.modelPrompt : undefined,
-                  defaultModel: settingsModel,
-                  defaultSystemPrompt: settingsSystemPrompt,
-                })
-                logDebug(
-                  debugKey,
-                  `process-feeds debug: finished model check for "${targetItem.title || 'untitled'}" elapsedMs=${Date.now() - modelStartedAt}`,
-                )
-                return result
-              })())
+              : (commentModelDecision ??
+                (await (async () => {
+                  const modelStartedAt = Date.now()
+                  logDebug(
+                    debugKey,
+                    `process-feeds debug: running model check for "${targetItem.title || 'untitled'}"`,
+                  )
+                  const result = await runModelCheck({
+                    content: modelContent,
+                    model: typeof rules?.model === 'string' ? rules.model : undefined,
+                    prompt: typeof rules?.modelPrompt === 'string' ? rules.modelPrompt : undefined,
+                    defaultModel: settingsModel,
+                    defaultSystemPrompt: settingsSystemPrompt,
+                    fallbackEndpoints: settingsFallbackEndpoints,
+                  })
+                  logDebug(
+                    debugKey,
+                    `process-feeds debug: finished model check for "${targetItem.title || 'untitled'}" elapsedMs=${Date.now() - modelStartedAt}`,
+                  )
+                  return result
+                })()))
 
             if (!notifyEveryPost && commentModelDecision === null) {
               logDebug(
@@ -832,7 +842,9 @@ export const processFeedsTask: TaskConfig = {
               automation,
               feed,
               title: targetItem.title || feed.name,
-              message: targetItem.content ? normalizeContent(targetItem.content).slice(0, 1000) : undefined,
+              message: targetItem.content
+                ? normalizeContent(targetItem.content).slice(0, 1000)
+                : undefined,
               sourceURL,
               matchedAt: targetItem.publishedAt,
               data: {
