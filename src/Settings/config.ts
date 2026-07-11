@@ -67,6 +67,16 @@ export const Settings: GlobalConfig = {
                   'Bearer token used only for this fallback endpoint. The primary endpoint still uses OPENAI_API_KEY.',
               },
             },
+            {
+              name: 'model',
+              label: 'Model',
+              type: 'text',
+              admin: {
+                description:
+                  'Optional model override for this fallback endpoint. Leave blank to use the selected default or automation model.',
+                placeholder: DEFAULT_MODEL_NAME,
+              },
+            },
           ],
         },
       ],

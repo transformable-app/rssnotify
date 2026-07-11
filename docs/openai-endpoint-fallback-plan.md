@@ -47,8 +47,9 @@ Settings > Model Settings can also define fallback endpoints as admin-managed ro
 
 - `baseURL`
 - `apiKey`
+- `model`
 
-When any admin-managed fallback endpoint exists, that list overrides `OPENAI_FALLBACK_BASE_URLS`. Env-configured fallback URLs reuse `OPENAI_API_KEY`; admin-managed fallback endpoints use the API key saved on each row. The selected model name is still shared across all endpoints.
+When any admin-managed fallback endpoint exists, that list overrides `OPENAI_FALLBACK_BASE_URLS`. Env-configured fallback URLs reuse `OPENAI_API_KEY` and the selected model; admin-managed fallback endpoints use the API key saved on each row and can optionally override the model for that endpoint.
 
 ## Failure Policy
 
@@ -84,6 +85,7 @@ Responsibilities:
 - Return raw content plus metadata about the endpoint used.
 - Return structured failure details for logging and caller-specific fallback behavior.
 - Use the primary `OPENAI_API_KEY` for the primary endpoint, use each admin fallback row's API key when configured, and otherwise reuse `OPENAI_API_KEY` for env fallback URLs.
+- Use the selected model for the primary endpoint and env fallback URLs; use an admin fallback row's model override when populated.
 
 Suggested result shape:
 
@@ -195,12 +197,12 @@ Use mocked `fetch` and fake timers where practical so tests do not need network 
 
 - Document `OPENAI_FALLBACK_BASE_URLS` in `README.md`.
 - Document Settings > Model Settings fallback endpoints with per-endpoint API keys.
+- Document optional per-endpoint model overrides.
 - Mention that fallback endpoints must be OpenAI chat-completions compatible.
-- Document that env fallback endpoints reuse `OPENAI_API_KEY` while admin fallback endpoints use row-specific keys.
+- Document that env fallback endpoints reuse `OPENAI_API_KEY` and the selected model, while admin fallback endpoints use row-specific keys and optional row-specific models.
 
 ## Future Options
 
-- Per-endpoint model overrides.
 - Cooldown / circuit-breaker behavior to skip a recently failing endpoint for a short period.
 - Endpoint attempt metadata persisted to `DigestRuns` for audit.
 - Admin-managed endpoint configuration in Settings instead of env-only configuration.

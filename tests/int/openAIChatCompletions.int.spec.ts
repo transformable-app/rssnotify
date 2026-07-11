@@ -83,7 +83,7 @@ describe('openAIChatCompletions', () => {
     expect(result.attempts[0]).toMatchObject({ status: 503, retryable: true })
   })
 
-  it('uses configured fallback endpoints with their own API keys instead of env fallback URLs', async () => {
+  it('uses configured fallback endpoints with their own API keys and model overrides instead of env fallback URLs', async () => {
     const fetchMock = vi
       .spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(
@@ -101,6 +101,7 @@ describe('openAIChatCompletions', () => {
         {
           baseURL: 'https://configured-fallback.example.com',
           apiKey: 'configured-key',
+          model: 'configured-model',
         },
       ],
       messages: [{ role: 'user', content: 'test' }],
@@ -110,6 +111,7 @@ describe('openAIChatCompletions', () => {
       ok: true,
       content: 'configured fallback',
       endpoint: 'https://configured-fallback.example.com/v1/chat/completions',
+      model: 'configured-model',
     })
     expect(fetchMock).toHaveBeenCalledTimes(2)
     expect(fetchMock).toHaveBeenNthCalledWith(
@@ -126,6 +128,12 @@ describe('openAIChatCompletions', () => {
         headers: expect.objectContaining({ authorization: 'Bearer configured-key' }),
       }),
     )
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toMatchObject({
+      model: 'test-model',
+    })
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toMatchObject({
+      model: 'configured-model',
+    })
   })
 
   it('does not try fallback endpoints after a non-retryable client failure', async () => {

@@ -146,7 +146,7 @@ Admin users (auth collection). Used for login and access control. Managed under 
 
 Configure feed processing and notification delivery.
 
-- **Model Settings** – Default model, system prompt, and optional OpenAI-compatible fallback endpoints used when an automation does not override them. Fallback endpoints configured here override `OPENAI_FALLBACK_BASE_URLS` and can each use a different API key.
+- **Model Settings** – Default model, system prompt, and optional OpenAI-compatible fallback endpoints used when an automation does not override them. Fallback endpoints configured here override `OPENAI_FALLBACK_BASE_URLS` and can each use a different API key and model.
 - **Firecrawl** – Optional host/token for RSS retrieval. If Firecrawl is not configured, rssnotify keeps using the existing direct fetch approach. Leave the token blank for self-hosted instances that do not require authentication.
 - **Email** – Enabled, From Name, From Email, Reply-To, Recipients (list of addresses). Used with SMTP (e.g. Nodemailer); ensure your deployment has SMTP env vars configured if you use email.
 - **Ntfy** – Enabled, Server URL (e.g. `https://ntfy.sh`), Auth Token (optional), Channels (list of topics).
@@ -186,8 +186,8 @@ AI filtering and digest summarization use OpenAI chat-completions compatible end
 
 - `OPENAI_BASE_URL` sets the primary provider base URL. Defaults to `https://api.openai.com`.
 - `OPENAI_FALLBACK_BASE_URLS` is an optional comma-separated list of alternate provider base URLs to try when the primary endpoint has a transport, timeout, rate-limit, or service failure.
-- Settings > Model Settings can define fallback endpoints with a base URL and API key for each provider. When any admin fallback endpoint is configured, that list overrides `OPENAI_FALLBACK_BASE_URLS`.
-- Env-configured fallback URLs reuse `OPENAI_API_KEY`; admin-configured fallback endpoints use their own saved API keys.
+- Settings > Model Settings can define fallback endpoints with a base URL, API key, and optional model override for each provider. When any admin fallback endpoint is configured, that list overrides `OPENAI_FALLBACK_BASE_URLS`.
+- Env-configured fallback URLs reuse `OPENAI_API_KEY` and the selected model; admin-configured fallback endpoints use their own saved API keys and can optionally use their own model.
 
 Example:
 

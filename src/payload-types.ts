@@ -982,6 +982,10 @@ export interface Setting {
            * Bearer token used only for this fallback endpoint. The primary endpoint still uses OPENAI_API_KEY.
            */
           apiKey: string;
+          /**
+           * Optional model override for this fallback endpoint. Leave blank to use the selected default or automation model.
+           */
+          model?: string | null;
           id?: string | null;
         }[]
       | null;
@@ -1078,6 +1082,7 @@ export interface SettingsSelect<T extends boolean = true> {
           | {
               baseURL?: T;
               apiKey?: T;
+              model?: T;
               id?: T;
             };
       };

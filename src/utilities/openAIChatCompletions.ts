@@ -41,11 +41,13 @@ type OpenAIChatCompletionsArgs = {
 export type OpenAIChatCompletionFallbackEndpoint = {
   baseURL?: string | null
   apiKey?: string | null
+  model?: string | null
 }
 
 type OpenAIEndpointConfig = {
   endpoint: string
   apiKey: string
+  model: string
 }
 
 const DEFAULT_OPENAI_BASE_URL = 'https://api.openai.com'
@@ -71,13 +73,15 @@ const getFallbackEndpointConfigs = (args: {
   fallbackBaseURLs?: string
   fallbackEndpoints?: OpenAIChatCompletionFallbackEndpoint[]
   primaryApiKey: string
+  primaryModel: string
 }): OpenAIEndpointConfig[] => {
   const configuredFallbacks = args.fallbackEndpoints
     ?.map((entry) => {
       const baseURL = normalizeBaseURL(entry.baseURL || '')
       const apiKey = entry.apiKey?.trim()
+      const model = entry.model?.trim() || args.primaryModel
       if (!baseURL || !apiKey) return null
-      return { endpoint: `${baseURL}/v1/chat/completions`, apiKey }
+      return { endpoint: `${baseURL}/v1/chat/completions`, apiKey, model }
     })
     .filter((entry): entry is OpenAIEndpointConfig => Boolean(entry))
 
@@ -90,22 +94,28 @@ const getFallbackEndpointConfigs = (args: {
     .map((baseURL) => ({
       endpoint: `${baseURL}/v1/chat/completions`,
       apiKey: args.primaryApiKey,
+      model: args.primaryModel,
     }))
 }
 
 const getOpenAIEndpointConfigs = (args: {
   apiKey: string
+  model?: string
   baseURL?: string
   fallbackBaseURLs?: string
   fallbackEndpoints?: OpenAIChatCompletionFallbackEndpoint[]
 }): OpenAIEndpointConfig[] => {
   const primary = normalizeBaseURL(args.baseURL || DEFAULT_OPENAI_BASE_URL)
+  const primaryModel = args.model || ''
   const candidates: OpenAIEndpointConfig[] = [
-    ...(primary ? [{ endpoint: `${primary}/v1/chat/completions`, apiKey: args.apiKey }] : []),
+    ...(primary
+      ? [{ endpoint: `${primary}/v1/chat/completions`, apiKey: args.apiKey, model: primaryModel }]
+      : []),
     ...getFallbackEndpointConfigs({
       fallbackBaseURLs: args.fallbackBaseURLs,
       fallbackEndpoints: args.fallbackEndpoints,
       primaryApiKey: args.apiKey,
+      primaryModel,
     }),
   ]
 
@@ -152,13 +162,14 @@ export const runOpenAIChatCompletion = async (
 ): Promise<OpenAIChatCompletionResult> => {
   const endpoints = getOpenAIEndpointConfigs({
     apiKey: args.apiKey,
+    model: args.model,
     baseURL: args.baseURL,
     fallbackBaseURLs: args.fallbackBaseURLs,
     fallbackEndpoints: args.fallbackEndpoints,
   })
   const attempts: OpenAIEndpointAttempt[] = []
 
-  for (const { endpoint, apiKey } of endpoints) {
+  for (const { endpoint, apiKey, model } of endpoints) {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), args.timeoutMs)
     const startedAt = Date.now()
@@ -172,7 +183,7 @@ export const runOpenAIChatCompletion = async (
           authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: args.model,
+          model,
           messages: args.messages,
         }),
       })
@@ -242,7 +253,7 @@ export const runOpenAIChatCompletion = async (
         ok: true,
         content,
         endpoint,
-        model: args.model,
+        model,
         attempts,
       }
     } catch (error) {
