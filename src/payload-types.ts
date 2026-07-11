@@ -103,12 +103,10 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     settings: Setting;
-    jobs: Job;
     'payload-jobs-stats': PayloadJobsStat;
   };
   globalsSelect: {
     settings: SettingsSelect<false> | SettingsSelect<true>;
-    jobs: JobsSelect<false> | JobsSelect<true>;
     'payload-jobs-stats': PayloadJobsStatsSelect<false> | PayloadJobsStatsSelect<true>;
   };
   locale: null;
@@ -1042,15 +1040,6 @@ export interface Setting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "jobs".
- */
-export interface Job {
-  id: string;
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-jobs-stats".
  */
 export interface PayloadJobsStat {
@@ -1123,15 +1112,6 @@ export interface SettingsSelect<T extends boolean = true> {
                   };
             };
       };
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "jobs_select".
- */
-export interface JobsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

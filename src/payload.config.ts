@@ -4,6 +4,7 @@ import sharp from 'sharp'
 import path from 'path'
 import { en } from 'payload/i18n/en'
 import { APIError, buildConfig, PayloadRequest } from 'payload'
+import type { CollectionConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import nodemailer from 'nodemailer'
 
@@ -15,12 +16,12 @@ import { Digests } from './collections/Digests'
 import { ResultFeeds } from './collections/ResultFeeds'
 import { RssFeeds } from './collections/RssFeeds'
 import { Users } from './collections/Users'
-import { JobsGlobal } from './JobsGlobal/config'
 import { Settings } from './Settings/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { tasks } from './jobs'
+import { getCurrentJobsBuildID, resetAllJobs, resetJobsForNewBuild } from './jobs/resetJobs'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -111,10 +112,22 @@ export default buildConfig({
       },
     },
   },
-  globals: [Settings, JobsGlobal],
+  globals: [Settings],
   plugins,
   secret: process.env.PAYLOAD_SECRET,
   sharp,
+  onInit: async (payload) => {
+    const reset = await resetJobsForNewBuild({ payload })
+
+    if (reset.reason === 'missing-build-id') {
+      payload.logger.info('Payload jobs build reset skipped: no build ID configured')
+      return
+    }
+
+    if (reset.reset) {
+      payload.logger.info(`Payload jobs reset for build ${reset.buildID}`)
+    }
+  },
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
@@ -127,23 +140,53 @@ export default buildConfig({
           throw new APIError('Unauthorized', 401)
         }
 
-        await req.payload.delete({
-          collection: 'payload-jobs',
-          where: { id: { exists: true } },
-          overrideAccess: false,
-          req,
-        })
-
-        await req.payload.updateGlobal({
-          slug: 'payload-jobs-stats',
-          data: {
-            stats: {},
-          },
-          overrideAccess: false,
+        await resetAllJobs({
+          buildID: getCurrentJobsBuildID(),
+          payload: req.payload,
+          reason: 'manual-reset',
           req,
         })
 
         return Response.json({ ok: true })
+      },
+    },
+    {
+      path: '/jobs/run',
+      method: 'get',
+      handler: async (req) => {
+        if (!req.user) {
+          const authHeader = req.headers.get('authorization')
+          if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+            throw new APIError('Unauthorized', 401)
+          }
+        }
+
+        const queue = typeof req.query.queue === 'string' ? req.query.queue : undefined
+        const allQueues = queue ? false : req.query.allQueues !== 'false'
+        const parsedLimit = Number(req.query.limit)
+
+        const reset = await resetJobsForNewBuild({
+          payload: req.payload,
+          req,
+        })
+        const schedule =
+          req.query.disableScheduling === 'true'
+            ? null
+            : await req.payload.jobs.handleSchedules({
+                allQueues,
+                queue,
+                req,
+              })
+        const run = await req.payload.jobs.run({
+          allQueues,
+          overrideAccess: true,
+          queue,
+          req,
+          silent: req.query.silent === 'true',
+          ...(!Number.isNaN(parsedLimit) ? { limit: parsedLimit } : {}),
+        })
+
+        return Response.json({ ok: true, reset, run, schedule })
       },
     },
   ],
@@ -157,7 +200,7 @@ export default buildConfig({
         // for the Vercel Cron secret to be present as an
         // Authorization header:
         const authHeader = req.headers.get('authorization')
-        return authHeader === `Bearer ${process.env.CRON_SECRET}`
+        return Boolean(process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`)
       },
     },
     autoRun: jobsAutoRunEnabled
@@ -168,6 +211,14 @@ export default buildConfig({
           },
         ]
       : undefined,
+    jobsCollectionOverrides: ({ defaultJobsCollection }): CollectionConfig => ({
+      ...defaultJobsCollection,
+      admin: {
+        ...defaultJobsCollection.admin,
+        group: 'System',
+        hidden: false,
+      },
+    }),
     tasks,
   },
 })

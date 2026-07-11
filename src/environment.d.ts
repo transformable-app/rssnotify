@@ -6,6 +6,7 @@ declare global {
       NEXT_PUBLIC_SERVER_URL: string
       VERCEL_PROJECT_PRODUCTION_URL: string
       CRON_SECRET?: string
+      PAYLOAD_JOBS_BUILD_ID?: string
       PAYLOAD_JOBS_AUTORUN?: 'true' | 'false'
       PAYLOAD_JOBS_AUTORUN_CRON?: string
       PROCESS_FEEDS_CRON?: string

@@ -168,6 +168,8 @@ Global that shows the job schedule and queue status. Used by the **process-feeds
 
 Job execution is allowed for logged-in users or when the request includes the correct `CRON_SECRET` (e.g. for external cron or Vercel Cron).
 
+On init, rssnotify compares the current jobs build ID with the marker stored in `payload-jobs-stats`. If the build ID changed, it clears `payload-jobs` and resets schedule stats so the new build starts from a clean queue. The build ID is read from `PAYLOAD_JOBS_BUILD_ID`, Vercel commit/deployment env vars, or the Next.js `.next/BUILD_ID` file included in the Docker standalone image.
+
 When using the external script `./scripts/run-payload-jobs-every-minute.sh`, it waits until past the next minute then runs jobs so scheduled tasks (with `waitUntil` set to the next cron tick) actually execute.
 
 ## Development

@@ -13,7 +13,7 @@ export const Users: CollectionConfig = {
   },
   admin: {
     defaultColumns: ['name', 'email'],
-    group: 'Settings',
+    group: 'System',
     useAsTitle: 'name',
   },
   auth: {

@@ -4,7 +4,6 @@ import { default as default_bdc32d12d657406dbf3dfea0b8c16c77 } from '@/component
 import { default as default_be6e6449e947a153252b6d6dda7fd945 } from '@/components/Admin/OpenSourceURLButton'
 import { default as default_8c0927ee4599b725fc7887c3c9c41112 } from '@/components/Admin/ResultFeedUrlCell'
 import { default as default_152575795fa678a72b4bbc0e92d140a7 } from '@/components/Admin/OpenResultFeedButton'
-import { default as default_e6080cf2a6380ab220552afd73667312 } from '@/components/Admin/JobsScheduleView'
 import { default as default_d92dc903e223f3cf452fddd454b9a2fa } from '@/components/Admin/NavLogoutVersion'
 import { RssIcon as RssIcon_1cb49e90c431a3a0ce88f18251ca15ac } from '@/components/Admin/graphics/RssBrand'
 import { RssLogo as RssLogo_1cb49e90c431a3a0ce88f18251ca15ac } from '@/components/Admin/graphics/RssBrand'
@@ -20,7 +19,6 @@ export const importMap = {
   "@/components/Admin/OpenSourceURLButton#default": default_be6e6449e947a153252b6d6dda7fd945,
   "@/components/Admin/ResultFeedUrlCell#default": default_8c0927ee4599b725fc7887c3c9c41112,
   "@/components/Admin/OpenResultFeedButton#default": default_152575795fa678a72b4bbc0e92d140a7,
-  "@/components/Admin/JobsScheduleView#default": default_e6080cf2a6380ab220552afd73667312,
   "@/components/Admin/NavLogoutVersion#default": default_d92dc903e223f3cf452fddd454b9a2fa,
   "@/components/Admin/graphics/RssBrand#RssIcon": RssIcon_1cb49e90c431a3a0ce88f18251ca15ac,
   "@/components/Admin/graphics/RssBrand#RssLogo": RssLogo_1cb49e90c431a3a0ce88f18251ca15ac,
