@@ -16,7 +16,7 @@ const nextConfig = {
   // Sharp dynamically loads its platform-specific native addon and libvips files.
   // Include them in the standalone trace so Alpine production images contain both.
   outputFileTracingIncludes: {
-    '/*': ['node_modules/sharp/**/*', 'node_modules/@img/**/*'],
+    '/*': ['node_modules/sharp/**/*'],
   },
   images: {
     // Disable optimization in production when behind nginx proxy

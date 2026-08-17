@@ -2,7 +2,7 @@
 # From https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile
 
 FROM node:22.17.0-alpine AS base
-ARG PNPM_VERSION=10.25.0
+ARG PNPM_VERSION=11.7.0
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -11,7 +11,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+COPY package.json pnpm-workspace.yaml yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
@@ -23,6 +23,8 @@ RUN \
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+ARG PAYLOAD_SECRET=build-secret-not-for-runtime
+ENV PAYLOAD_SECRET=${PAYLOAD_SECRET}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
