@@ -6,7 +6,6 @@ import { en } from 'payload/i18n/en'
 import { APIError, buildConfig, PayloadRequest } from 'payload'
 import type { CollectionConfig } from 'payload'
 import { fileURLToPath } from 'url'
-import nodemailer from 'nodemailer'
 
 import { FeedAutomations } from './collections/FeedAutomations'
 import { AutomationHistory } from './collections/NotificationHistory'
@@ -27,6 +26,21 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 const jobsAutoRunEnabled = process.env.PAYLOAD_JOBS_AUTORUN === 'true'
 const jobsAutoRunCron = process.env.PAYLOAD_JOBS_AUTORUN_CRON || '* * * * *'
+const smtpURL = process.env.SMTP_URL
+const smtpTransportOptions = (() => {
+  if (!smtpURL) return undefined
+
+  const url = new URL(smtpURL)
+  return {
+    host: url.hostname,
+    port: url.port ? Number(url.port) : url.protocol === 'smtps:' ? 465 : 587,
+    secure: url.protocol === 'smtps:',
+    auth: {
+      user: decodeURIComponent(url.username),
+      pass: decodeURIComponent(url.password),
+    },
+  }
+})()
 
 export default buildConfig({
   admin: {
@@ -89,8 +103,8 @@ export default buildConfig({
   email: nodemailerAdapter({
     defaultFromAddress: process.env.SMTP_FROM ?? 'noreply@localhost',
     defaultFromName: process.env.SMTP_FROM_NAME ?? 'RSS Notify',
-    ...(process.env.SMTP_URL && {
-      transport: nodemailer.createTransport(process.env.SMTP_URL),
+    ...(smtpTransportOptions && {
+      transportOptions: smtpTransportOptions,
     }),
   }),
   collections: [RssFeeds, FeedAutomations, Notifications, AutomationHistory, Digests, DigestRuns, ResultFeeds, Users],
