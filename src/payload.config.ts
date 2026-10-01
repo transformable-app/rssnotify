@@ -227,6 +227,11 @@ export default buildConfig({
       : undefined,
     jobsCollectionOverrides: ({ defaultJobsCollection }): CollectionConfig => ({
       ...defaultJobsCollection,
+      access: {
+        ...defaultJobsCollection.access,
+        admin: ({ req }) => Boolean(req.user),
+        read: ({ req }) => Boolean(req.user),
+      },
       admin: {
         ...defaultJobsCollection.admin,
         group: 'System',
