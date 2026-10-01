@@ -37,7 +37,7 @@ export const FeedAutomations: CollectionConfig<'feed-automations'> = {
       defaultValue: 'rss',
       options: [
         { label: 'Standard RSS', value: 'rss' },
-        { label: 'Reddit', value: 'reddit' },
+        { label: 'Atom/RSS', value: 'reddit' },
         { label: 'WordPress / Blog', value: 'wordpress' },
       ],
     },
@@ -52,7 +52,7 @@ export const FeedAutomations: CollectionConfig<'feed-automations'> = {
     },
     {
       name: 'standardRules',
-      label: 'RSS Rules',
+      label: 'Atom/RSS Rules',
       type: 'group',
       fields: [
         {

@@ -6,7 +6,7 @@ Built with [Payload CMS](https://payloadcms.com)
 
 ## Features
 
-- **RSS Feeds** – Add Standard RSS, Reddit, or WordPress feed URLs; enable/disable per feed.
+- **Atom/RSS Feeds** – Add Standard RSS, Atom/RSS, or WordPress feed URLs; enable/disable per feed.
 - **Feed Automations** – Define rules per automation: optional OpenAI-based filtering, “notify every post,” and type-specific options (e.g. follow post RSS, process comments for Reddit/WordPress).
 - **Notifications** – View and manage generated alerts; delivery status (email / ntfy) and bulk actions in the admin.
 - **Digests** – Send scheduled email summaries of notifications, optionally summarized and prioritized with AI.
@@ -16,7 +16,7 @@ Built with [Payload CMS](https://payloadcms.com)
 
 ## Screenshots
 
-| Dashboard                                       | RSS Feeds                                      |
+| Dashboard                                       | Atom/RSS Feeds                                 |
 | ----------------------------------------------- | ---------------------------------------------- |
 | ![Dashboard view](docs/rssnotify-dashboard.png) | ![RSS feeds view](docs/rssnotify-rssfeeds.png) |
 
@@ -40,18 +40,18 @@ Built with [Payload CMS](https://payloadcms.com)
    ```bash
    docker-compose up
    ```
-3. Open `http://localhost:3000/admin`, create an admin user, then add **RSS Feeds** and **Feed Automations**.
+3. Open `http://localhost:3000/admin`, create an admin user, then add **Atom/RSS Feeds** and **Feed Automations**.
 
 ## Collections
 
 All content is restricted to authenticated users.
 
-### RSS Feeds
+### Atom/RSS Feeds
 
 Feed sources to poll.
 
 - **Name** – Label for the feed.
-- **Type** – `Standard RSS`, `Reddit`, or `WordPress`.
+- **Type** – `Standard RSS`, `Atom/RSS`, or `WordPress`.
 - **URL** – Feed URL (unique).
 - **Enabled** – Whether the feed is included in processing.
 - **Notes** – Optional notes.
@@ -62,9 +62,9 @@ Rules that run when processing feeds. Each automation can target all feeds or a 
 
 - **Name** – Label for the automation.
 - **Enabled** – Whether the automation runs.
-- **Type** – `Standard RSS`, `Reddit`, or `WordPress / Blog`.
+- **Type** – `Standard RSS`, `Atom/RSS`, or `WordPress / Blog`.
 - **Feeds** – Optional: limit this automation to specific feeds.
-- **RSS Rules** (shared) – OpenAI model and prompt for evaluating content; option to notify on every post without evaluation.
+- **Atom/RSS Rules** (shared) – OpenAI model and prompt for evaluating content; option to notify on every post without evaluation.
 - **Reddit Rules** (when type = Reddit) – Follow post URL to its `.rss` version; process each comment.
 - **WordPress / Blog RSS Rules** (when type = WordPress) – Same options as Reddit.
 
@@ -162,7 +162,7 @@ Global that shows the job schedule and queue status. Used by the **process-feeds
 
 ## Jobs and schedule
 
-- **process-feeds** – Fetches RSS/Reddit/WordPress feeds, evaluates items with automations (and optionally OpenAI), creates notifications. Runs every 15 minutes by default (`*/15 * * * *`) and can be overridden with `PROCESS_FEEDS_CRON` (e.g. `0 0 * * *` for hourly).
+- **process-feeds** – Fetches Atom/RSS, Reddit, and WordPress feeds, evaluates items with automations (and optionally OpenAI), creates notifications. Runs every 15 minutes by default (`*/15 * * * *`) and can be overridden with `PROCESS_FEEDS_CRON` (e.g. `0 0 * * *` for hourly).
 - **deliver-notifications** – Sends pending notifications via email and/or ntfy using Notification Settings. Runs every minute by default (`0 * * * * *`) and can be overridden with `DELIVER_NOTIFICATIONS_CRON`.
 - **send-digests** – Checks for due digests and sends scheduled email summaries. Runs every minute by default (`0 * * * * *`) and can be overridden with `SEND_DIGESTS_CRON`.
 

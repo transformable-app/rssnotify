@@ -6,8 +6,8 @@ import { authenticated } from '../access/authenticated'
 export const RssFeeds: CollectionConfig<'rss-feeds'> = {
   slug: 'rss-feeds',
   labels: {
-    singular: 'RSS Feed',
-    plural: 'RSS Feeds',
+    singular: 'Atom/RSS Feed',
+    plural: 'Atom/RSS Feeds',
   },
   access: {
     create: authenticated,
@@ -162,7 +162,7 @@ export const RssFeeds: CollectionConfig<'rss-feeds'> = {
       defaultValue: 'rss',
       options: [
         { label: 'Standard RSS', value: 'rss' },
-        { label: 'Reddit', value: 'reddit' },
+        { label: 'Atom/RSS', value: 'reddit' },
         { label: 'WordPress', value: 'wordpress' },
       ],
     },
