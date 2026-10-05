@@ -168,7 +168,9 @@ Global that shows the job schedule and queue status. Used by the **process-feeds
 
 Job execution is allowed for logged-in users or when the request includes the correct `CRON_SECRET` (e.g. for external cron or Vercel Cron).
 
-On init, rssnotify compares the current jobs build ID with the marker stored in `payload-jobs-stats`. If the build ID changed, it clears `payload-jobs` and resets schedule stats so the new build starts from a clean queue. The build ID is read from `PAYLOAD_JOBS_BUILD_ID`, Vercel commit/deployment env vars, or the Next.js `.next/BUILD_ID` file included in the Docker standalone image.
+On init and each `/api/jobs/run` request, rssnotify compares the current jobs build ID with the marker stored in `payload-jobs-stats`. If the build ID changed, it clears `payload-jobs` and resets schedule stats so the new build starts from a clean queue. The build ID is read from `PAYLOAD_JOBS_BUILD_ID`, Vercel commit/deployment env vars, or the Next.js `.next/BUILD_ID` file included in the Docker standalone image. Startup completes this reset before starting the recovery watchdog.
+
+Before scheduling and each `/api/jobs/run` request, rssnotify cancels jobs that have been processing without an update for over 24 hours and scheduled jobs that are over 24 hours old and overdue by over 24 hours. Completed, failed, recent, future, and unrelated pending jobs are preserved, along with schedule stats. With `PAYLOAD_JOBS_AUTORUN=true`, an independent watchdog also checks on startup and every five minutes, including while the worker is occupied. The watchdog is disabled during builds and stops when Payload shuts down. The authenticated `POST /api/jobs/reset` endpoint remains available for an intentional full reset.
 
 When using the external script `./scripts/run-payload-jobs-every-minute.sh`, it waits until past the next minute then runs jobs so scheduled tasks (with `waitUntil` set to the next cron tick) actually execute.
 

@@ -21,6 +21,7 @@ import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { tasks } from './jobs'
 import { getCurrentJobsBuildID, resetAllJobs, resetJobsForNewBuild } from './jobs/resetJobs'
+import { recoverStuckJobs, startStuckJobWatchdog } from './jobs/recoverStuckJobs'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -135,12 +136,11 @@ export default buildConfig({
 
     if (reset.reason === 'missing-build-id') {
       payload.logger.info('Payload jobs build reset skipped: no build ID configured')
-      return
-    }
-
-    if (reset.reset) {
+    } else if (reset.reset) {
       payload.logger.info(`Payload jobs reset for build ${reset.buildID}`)
     }
+
+    startStuckJobWatchdog(payload)
   },
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
@@ -183,6 +183,7 @@ export default buildConfig({
           payload: req.payload,
           req,
         })
+        await recoverStuckJobs(req.payload, req)
         const schedule =
           req.query.disableScheduling === 'true'
             ? null
