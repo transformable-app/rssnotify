@@ -6,6 +6,10 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
 
+patchedDependencies:
+  # GHSA-vfj7-8cjw-p6xm: fixed nesting/traversal cap; remove after an official fix is verified.
+  braces@3.0.3: patches/braces@3.0.3.patch
+
 overrides:
   'fast-copy': '3.1.0'
   '@babel/core': '>=7.29.6 <8.0.0'
@@ -37,3 +41,33 @@ overrides:
   sharp: '0.35.5'
   'source-map-js': '1.2.2'
   vite: '7.3.5'
+
+minimumReleaseAgeExclude:
+  - '@payloadcms/admin-bar'
+  - '@payloadcms/db-mongodb'
+  - '@payloadcms/email-nodemailer'
+  - '@payloadcms/graphql'
+  - '@payloadcms/live-preview-react'
+  - '@payloadcms/live-preview'
+  - '@payloadcms/next'
+  - '@payloadcms/plugin-form-builder'
+  - '@payloadcms/plugin-nested-docs'
+  - '@payloadcms/plugin-redirects'
+  - '@payloadcms/plugin-search'
+  - '@payloadcms/plugin-seo'
+  - '@payloadcms/richtext-lexical'
+  - '@payloadcms/translations'
+  - '@payloadcms/ui'
+  - payload
+  - '@next/env@16.4.2'
+  - '@next/eslint-plugin-next@16.4.2'
+  - '@next/swc-darwin-arm64@16.4.2'
+  - '@next/swc-darwin-x64@16.4.2'
+  - '@next/swc-linux-arm64-gnu@16.4.2'
+  - '@next/swc-linux-arm64-musl@16.4.2'
+  - '@next/swc-linux-x64-gnu@16.4.2'
+  - '@next/swc-linux-x64-musl@16.4.2'
+  - '@next/swc-win32-arm64-msvc@16.4.2'
+  - '@next/swc-win32-x64-msvc@16.4.2'
+  - eslint-config-next@16.4.2
+  - next@16.4.2
