@@ -7,6 +7,8 @@ allowBuilds:
   unrs-resolver: true
 
 patchedDependencies:
+  # Preserve structured validation errors with the security override to Zod 4.
+  '@payload-enchants/docs-reorder@1.2.2': patches/@payload-enchants__docs-reorder@1.2.2.patch
   # GHSA-vfj7-8cjw-p6xm: fixed nesting/traversal cap; remove after an official fix is verified.
   braces@3.0.3: patches/braces@3.0.3.patch
 
@@ -19,20 +21,20 @@ overrides:
   esbuild: '0.28.1'
   rollup: '^4.64.5'
   minimatch: '>=10.2.3'
-  undici: '7.29.1'
+  undici: '7.30.1'
   flatted: '>=3.4.2'
   picomatch: '>=4.0.4'
   brace-expansion: '5.0.12'
-  nodemailer: '10.0.9'
+  nodemailer: '10.1.4'
   postcss: '8.5.25'
   'postcss-selector-parser': '7.1.6'
-  fast-uri: '4.1.5'
+  fast-uri: '4.2.3'
   qs: '>=6.16.0'
   uuid: '>=14.0.0'
   yaml: '>=1.10.3'
   ws: '>=8.21.0'
   'payload>ajv': '>=8.18.0'
-  dompurify: '3.4.16'
+  dompurify: '3.4.17'
   nanoid: '3.3.18'
   immutable: '>=5.1.8'
   js-yaml: '5.4.1'
@@ -40,7 +42,9 @@ overrides:
   mongoose: '8.24.1'
   sharp: '0.35.5'
   'source-map-js': '1.2.2'
-  vite: '7.3.5'
+  vite: '7.3.7'
+  happy-dom: '21.0.4'
+  zod: '4.6.6'
 
 minimumReleaseAgeExclude:
   - '@payloadcms/admin-bar'

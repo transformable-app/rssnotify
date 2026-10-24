@@ -2,14 +2,14 @@ version: '3'
 
 services:
   payload:
-    image: node:18-alpine
+    image: node:22.23.4-alpine
     ports:
       - '3000:3000'
     volumes:
       - .:/home/node/app
       - node_modules:/home/node/app/node_modules
     working_dir: /home/node/app/
-    command: sh -c "yarn install && yarn dev"
+    command: sh -c "corepack enable && corepack prepare pnpm@11.7.0 --activate && pnpm install --frozen-lockfile && pnpm dev"
     depends_on:
       - mongo
     env_file:

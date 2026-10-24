@@ -1,0 +1,12 @@
+diff --git a/dist/handlers/saveChanges.js b/dist/handlers/saveChanges.js
+--- a/dist/handlers/saveChanges.js
++++ b/dist/handlers/saveChanges.js
+@@ -15,7 +15,7 @@ export const saveChanges = ({ access })=>async (req)=>{
+         });
+         const result = schema.safeParse(await req.json());
+         if (!result.success) return Response.json({
+-            errors: result.error.errors
++            errors: result.error.issues
+         }, {
+             status: 400
+         });
