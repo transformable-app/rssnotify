@@ -7,7 +7,12 @@ allowBuilds:
   unrs-resolver: true
 
 patchedDependencies:
-  # Preserve structured validation errors with the security override to Zod 4.
+  '@payloadcms/graphql@3.93.0': patches/@payloadcms__graphql@3.93.0.patch
+  # Reject __proto__ properties in merge targets and sources.
+  deepmerge@4.3.1: patches/deepmerge@4.3.1.patch
+  # Adapt copyfiles to the glob promise API.
+  copyfiles@2.4.1: patches/copyfiles@2.4.1.patch
+  # Preserve structured validation errors across Zod versions.
   '@payload-enchants/docs-reorder@1.2.2': patches/@payload-enchants__docs-reorder@1.2.2.patch
   # GHSA-vfj7-8cjw-p6xm: fixed nesting/traversal cap; remove after an official fix is verified.
   braces@3.0.3: patches/braces@3.0.3.patch
@@ -20,7 +25,8 @@ overrides:
   'fast-xml-builder': '>=1.1.7'
   esbuild: '0.28.1'
   rollup: '^4.64.5'
-  minimatch: '>=11.0.1'
+  minimatch: '11.0.1'
+  glob: '14.0.2'
   undici: '7.30.1'
   flatted: '>=3.4.2'
   picomatch: '>=4.0.4'
@@ -29,7 +35,7 @@ overrides:
   postcss: '8.5.25'
   'postcss-selector-parser': '7.1.6'
   fast-uri: '4.2.3'
-  qs: '>=6.16.0'
+  qs: '>=6.16.1'
   uuid: '>=14.0.0'
   yaml: '>=1.10.3'
   ws: '>=8.21.0'
@@ -44,7 +50,8 @@ overrides:
   'source-map-js': '1.2.2'
   vite: '7.3.7'
   happy-dom: '21.0.4'
-  zod: '4.6.6'
+  # Preserve Zod 3 consumers until they support the Zod 4 API.
+  'zod@>=4 <5': '4.6.6'
 
 minimumReleaseAgeExclude:
   - '@payloadcms/admin-bar'
@@ -63,18 +70,6 @@ minimumReleaseAgeExclude:
   - '@payloadcms/translations'
   - '@payloadcms/ui'
   - payload
-  - '@next/env@16.4.2'
-  - '@next/eslint-plugin-next@16.4.2'
-  - '@next/swc-darwin-arm64@16.4.2'
-  - '@next/swc-darwin-x64@16.4.2'
-  - '@next/swc-linux-arm64-gnu@16.4.2'
-  - '@next/swc-linux-arm64-musl@16.4.2'
-  - '@next/swc-linux-x64-gnu@16.4.2'
-  - '@next/swc-linux-x64-musl@16.4.2'
-  - '@next/swc-win32-arm64-msvc@16.4.2'
-  - '@next/swc-win32-x64-msvc@16.4.2'
-  - eslint-config-next@16.4.2
-  - next@16.4.2
   - '@next/env@16.4.5'
   - '@next/eslint-plugin-next@16.4.5'
   - '@next/swc-darwin-arm64@16.4.5'

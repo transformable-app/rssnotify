@@ -1,0 +1,13 @@
+diff --git a/dist/utilities/formatName.js b/dist/utilities/formatName.js
+index 0ddbd3a3708cf2124b0aae091a3191647ff30c50..af24ff735fda61730e54a8fb12b961a13bf3a7f0 100644
+--- a/dist/utilities/formatName.js
++++ b/dist/utilities/formatName.js
+@@ -24,7 +24,7 @@ export const formatName = (string)=>{
+         sanitizedString = `_${sanitizedString}`;
+     }
+     const formatted = sanitizedString// Convert accented characters
+-    .normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/\./g, '_').replace(/-|\//g, '_').replace(/\+/g, '_').replace(/,/g, '_').replace(/\(/g, '_').replace(/\)/g, '_').replace(/'/g, '_').replace(/ /g, '').replace(/\[|\]/g, '_');
++    .normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/\./g, '_').replace(/-|\//g, '_').replace(/\+/g, '_').replace(/,/g, '_').replace(/\(/g, '_').replace(/\)/g, '_').replace(/'/g, '_').replace(/ /g, '').replace(/\[|\]/g, '_').replace(/:/g, '_');
+     return formatted || '_';
+ };
+ 
