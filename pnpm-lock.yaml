@@ -37,7 +37,7 @@ overrides:
   source-map-js: 1.2.2
   vite: 7.3.7
   happy-dom: 21.0.4
-  zod@>=4 <5: 4.6.6
+  zod: 4.6.6
 
 patchedDependencies:
   '@payload-enchants/docs-reorder@1.2.2': 5b7ca7ebd00b31a4ef08f0a4f4ce5b0595367e79b71a2ebe190768ec79a757c1
@@ -5085,9 +5085,6 @@ packages:
     peerDependencies:
       zod: 4.6.6
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
-
   zod@4.6.6:
     resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
 
@@ -6016,7 +6013,7 @@ snapshots:
       '@radix-ui/react-dialog': 1.1.15(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       clsx: 2.1.1
       payload: 3.93.0(graphql@17.0.2)(typescript@6.0.3)
-      zod: 3.25.76
+      zod: 4.6.6
     transitivePeerDependencies:
       - '@types/react'
       - '@types/react-dom'
@@ -10295,8 +10292,6 @@ snapshots:
   zod-validation-error@4.0.2(zod@4.6.6):
     dependencies:
       zod: 4.6.6
-
-  zod@3.25.76: {}
 
   zod@4.6.6: {}
 

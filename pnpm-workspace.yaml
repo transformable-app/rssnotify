@@ -50,8 +50,8 @@ overrides:
   'source-map-js': '1.2.2'
   vite: '7.3.7'
   happy-dom: '21.0.4'
-  # Preserve Zod 3 consumers until they support the Zod 4 API.
-  'zod@>=4 <5': '4.6.6'
+  # Require the fixed version for all consumers; docs-reorder has a compatibility patch.
+  zod: '4.6.6'
 
 minimumReleaseAgeExclude:
   - '@payloadcms/admin-bar'
