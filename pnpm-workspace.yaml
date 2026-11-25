@@ -7,9 +7,7 @@ allowBuilds:
   unrs-resolver: true
 
 patchedDependencies:
-  '@payloadcms/graphql@3.94.0': patches/@payloadcms__graphql@3.94.0.patch
-  # Reject __proto__ properties in merge targets and sources.
-  deepmerge@4.3.1: patches/deepmerge@4.3.1.patch
+  '@payloadcms/graphql@3.94.1': patches/@payloadcms__graphql@3.94.1.patch
   # Adapt copyfiles to the glob promise API.
   copyfiles@2.4.1: patches/copyfiles@2.4.1.patch
   # Preserve structured validation errors across Zod versions.
